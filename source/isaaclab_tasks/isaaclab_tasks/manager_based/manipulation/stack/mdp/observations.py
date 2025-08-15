@@ -283,6 +283,11 @@ def object_grasped(
     end_effector_pos = ee_frame.data.target_pos_w[:, 0, :]
     pose_diff = torch.linalg.vector_norm(object_pos - end_effector_pos, dim=1)
 
+    # cube_z = object_pos[:, 2]
+
+    # # end the grasped subtask once the cube has been lifted up
+    # grasped = cube_z > 0.15
+
     grasped = torch.logical_and(
         pose_diff < diff_threshold,
         torch.abs(robot.data.joint_pos[:, -1] - gripper_open_val.to(env.device)) > gripper_threshold,

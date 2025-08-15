@@ -45,7 +45,7 @@ class FrankaCubeStackIKRelMimicEnvCfg(FrankaCubeStackEnvCfg, MimicEnvCfg):
                 subtask_term_signal="grasp_1",
                 # Specifies time offsets for data generation when splitting a trajectory into
                 # subtask segments. Random offsets are added to the termination boundary.
-                subtask_term_offset_range=(0, 0),
+                subtask_term_offset_range=(10, 20),
                 # Selection strategy for the source subtask segment during data generation
                 selection_strategy="nearest_neighbor_object",
                 # Optional parameters for the selection strategy function
@@ -69,7 +69,7 @@ class FrankaCubeStackIKRelMimicEnvCfg(FrankaCubeStackEnvCfg, MimicEnvCfg):
                 # Corresponding key for the binary indicator in "datagen_info" for completion
                 subtask_term_signal="stack_1",
                 # Time offsets for data generation when splitting a trajectory
-                subtask_term_offset_range=(0, 0),
+                subtask_term_offset_range=(10, 20),
                 # Selection strategy for source subtask segment
                 selection_strategy="nearest_neighbor_object",
                 # Optional parameters for the selection strategy function
@@ -92,7 +92,7 @@ class FrankaCubeStackIKRelMimicEnvCfg(FrankaCubeStackEnvCfg, MimicEnvCfg):
                 # Corresponding key for the binary indicator in "datagen_info" for completion
                 subtask_term_signal="grasp_2",
                 # Time offsets for data generation when splitting a trajectory
-                subtask_term_offset_range=(0, 0),
+                subtask_term_offset_range=(10, 20),
                 # Selection strategy for source subtask segment
                 selection_strategy="nearest_neighbor_object",
                 # Optional parameters for the selection strategy function
