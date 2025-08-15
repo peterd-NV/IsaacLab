@@ -95,7 +95,8 @@ class DifferentialInverseKinematicsAction(ActionTerm):
 
         # create tensors for raw and processed actions
         self._raw_actions = torch.zeros(self.num_envs, self.action_dim, device=self.device)
-        self._processed_actions = torch.zeros_like(self.raw_actions)
+        self._processed_actions_old = torch.zeros_like(self.raw_actions)
+        self._processed_actions = torch.zeros(self.num_envs, 7, device=self.device)
 
         # save the scale as tensors
         self._scale = torch.zeros((self.num_envs, self.action_dim), device=self.device)
@@ -155,15 +156,15 @@ class DifferentialInverseKinematicsAction(ActionTerm):
     def process_actions(self, actions: torch.Tensor):
         # store the raw actions
         self._raw_actions[:] = actions
-        self._processed_actions[:] = self.raw_actions * self._scale
+        self._processed_actions_old[:] = self.raw_actions * self._scale
         if self.cfg.clip is not None:
-            self._processed_actions = torch.clamp(
-                self._processed_actions, min=self._clip[:, :, 0], max=self._clip[:, :, 1]
+            self._processed_actions_old = torch.clamp(
+                self._processed_actions_old, min=self._clip[:, :, 0], max=self._clip[:, :, 1]
             )
         # obtain quantities from simulation
         ee_pos_curr, ee_quat_curr = self._compute_frame_pose()
         # set command into controller
-        self._ik_controller.set_command(self._processed_actions, ee_pos_curr, ee_quat_curr)
+        self._ik_controller.set_command(self._processed_actions_old, ee_pos_curr, ee_quat_curr)
 
     def apply_actions(self):
         # obtain quantities from simulation
@@ -176,6 +177,8 @@ class DifferentialInverseKinematicsAction(ActionTerm):
         else:
             joint_pos_des = joint_pos.clone()
         # set the joint position command
+
+        self._processed_actions[:] = joint_pos_des.clone()
         self._asset.set_joint_position_target(joint_pos_des, self._joint_ids)
 
     def reset(self, env_ids: Sequence[int] | None = None) -> None:
