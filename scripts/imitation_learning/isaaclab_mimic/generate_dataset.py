@@ -12,15 +12,13 @@ Main data generation script.
 
 import argparse
 
+from isaac_arena.cli.isaac_arena_cli import get_isaac_arena_cli_parser
+
 from isaaclab.app import AppLauncher
 
 # add argparse arguments
-parser = argparse.ArgumentParser(description="Generate demonstrations for Isaac Lab environments.")
-parser.add_argument("--task", type=str, default=None, help="Name of the task.")
+parser = get_isaac_arena_cli_parser()
 parser.add_argument("--generation_num_trials", type=int, help="Number of demos to be generated.", default=None)
-parser.add_argument(
-    "--num_envs", type=int, default=1, help="Number of environments to instantiate for generating datasets."
-)
 parser.add_argument("--input_file", type=str, default=None, required=True, help="File path to the source dataset file.")
 parser.add_argument(
     "--output_file",
@@ -39,8 +37,7 @@ parser.add_argument(
     default=False,
     help="Enable Pinocchio.",
 )
-# append AppLauncher cli args
-AppLauncher.add_app_launcher_args(parser)
+
 # parse the arguments
 args_cli = parser.parse_args()
 
@@ -64,6 +61,7 @@ import torch
 
 import omni
 
+# Imports have to follow simulation startup.
 from isaaclab.envs import ManagerBasedRLMimicEnv
 
 import isaaclab_mimic.envs  # noqa: F401
@@ -87,7 +85,8 @@ def main():
     env_name = task_name or get_env_name_from_dataset(args_cli.input_file)
 
     # Configure environment
-    env_cfg, success_term = setup_env_config(
+    env_cfg, env_name, success_term = setup_env_config(
+        args_cli=args_cli,
         env_name=env_name,
         output_dir=output_dir,
         output_file_name=output_file_name,

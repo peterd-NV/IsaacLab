@@ -8,6 +8,8 @@ import contextlib
 import torch
 from typing import Any
 
+from isaac_arena.environments.compile_env import get_arena_env_cfg
+
 from isaaclab.envs import ManagerBasedRLMimicEnv
 from isaaclab.envs.mdp.recorders.recorders_cfg import ActionStateRecorderManagerCfg
 from isaaclab.managers import DatasetExportMode, TerminationTermCfg
@@ -132,13 +134,14 @@ def env_loop(
 
 
 def setup_env_config(
+    args_cli: Any,
     env_name: str,
     output_dir: str,
     output_file_name: str,
     num_envs: int,
     device: str,
     generation_num_trials: int | None = None,
-) -> tuple[Any, Any]:
+) -> tuple[Any, str, Any]:
     """Configure the environment for data generation.
 
     Args:
@@ -157,7 +160,7 @@ def setup_env_config(
     Raises:
         NotImplementedError: If no success termination term found
     """
-    env_cfg = parse_env_cfg(env_name, device=device, num_envs=num_envs)
+    env_cfg, env_name = get_arena_env_cfg(args_cli)
 
     if generation_num_trials is not None:
         env_cfg.datagen_config.generation_num_trials = generation_num_trials
@@ -186,7 +189,7 @@ def setup_env_config(
     else:
         env_cfg.recorders.dataset_export_mode = DatasetExportMode.EXPORT_SUCCEEDED_ONLY
 
-    return env_cfg, success_term
+    return env_cfg, env_name, success_term
 
 
 def setup_async_generation(
