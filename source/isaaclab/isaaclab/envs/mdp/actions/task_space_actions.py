@@ -214,16 +214,16 @@ class DifferentialInverseKinematicsAction(ActionTerm):
 
     def apply_actions(self):
         # obtain quantities from simulation
-        # ee_pos_curr, ee_quat_curr = self._compute_frame_pose()
-        # joint_pos = self._asset.data.joint_pos[:, self._joint_ids]
-        # # compute the delta in joint-space
-        # if ee_quat_curr.norm() != 0:
-        #     jacobian = self._compute_frame_jacobian()
-        #     joint_pos_des = self._ik_controller.compute(ee_pos_curr, ee_quat_curr, jacobian, joint_pos)
-        # else:
-        #     joint_pos_des = joint_pos.clone()
+        ee_pos_curr, ee_quat_curr = self._compute_frame_pose()
+        joint_pos = self._asset.data.joint_pos[:, self._joint_ids]
+        # compute the delta in joint-space
+        if ee_quat_curr.norm() != 0:
+            jacobian = self._compute_frame_jacobian()
+            joint_pos_des = self._ik_controller.compute(ee_pos_curr, ee_quat_curr, jacobian, joint_pos)
+        else:
+            joint_pos_des = joint_pos.clone()
         # set the joint position command
-        self._asset.set_joint_position_target(self._processed_actions, self._joint_ids)
+        self._asset.set_joint_position_target(joint_pos_des, self._joint_ids)
 
     def reset(self, env_ids: Sequence[int] | None = None) -> None:
         self._raw_actions[env_ids] = 0.0
