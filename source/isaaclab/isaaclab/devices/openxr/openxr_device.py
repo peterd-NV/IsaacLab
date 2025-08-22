@@ -13,7 +13,7 @@ from enum import Enum
 from typing import Any
 
 import carb
-
+import isaaclab.devices as devices
 from isaaclab.devices.openxr.common import HAND_JOINT_NAMES
 from isaaclab.devices.retargeter_base import RetargeterBase
 
@@ -27,13 +27,6 @@ XRPoseValidityFlags = None
 with contextlib.suppress(ModuleNotFoundError):
     from omni.kit.xr.core import XRCore, XRPoseValidityFlags
 from isaacsim.core.prims import SingleXFormPrim
-
-
-@dataclass
-class OpenXRDeviceCfg(DeviceCfg):
-    """Configuration for OpenXR devices."""
-
-    xr_cfg: XrCfg | None = None
 
 
 class OpenXRDevice(DeviceBase):
@@ -78,7 +71,7 @@ class OpenXRDevice(DeviceBase):
 
     def __init__(
         self,
-        cfg: OpenXRDeviceCfg,
+        cfg: "OpenXRDeviceCfg",
         retargeters: list[RetargeterBase] | None = None,
     ):
         """Initialize the OpenXR device.
@@ -300,3 +293,12 @@ class OpenXRDevice(DeviceBase):
         elif "reset" in msg:
             if "RESET" in self._additional_callbacks:
                 self._additional_callbacks["RESET"]()
+
+
+@dataclass
+class OpenXRDeviceCfg(DeviceCfg):
+    """Configuration for OpenXR devices."""
+
+    device_type: type[OpenXRDevice] = OpenXRDevice
+    xr_cfg: XrCfg | None = None
+    teleoperation_active_default: bool = False

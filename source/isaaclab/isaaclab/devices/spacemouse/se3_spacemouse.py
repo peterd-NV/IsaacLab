@@ -18,15 +18,6 @@ from ..device_base import DeviceBase, DeviceCfg
 from .utils import convert_buffer
 
 
-@dataclass
-class Se3SpaceMouseCfg(DeviceCfg):
-    """Configuration for SE3 space mouse devices."""
-
-    pos_sensitivity: float = 0.4
-    rot_sensitivity: float = 0.8
-    retargeters: None = None
-
-
 class Se3SpaceMouse(DeviceBase):
     """A space-mouse controller for sending SE(3) commands as delta poses.
 
@@ -49,7 +40,7 @@ class Se3SpaceMouse(DeviceBase):
 
     """
 
-    def __init__(self, cfg: Se3SpaceMouseCfg):
+    def __init__(self, cfg: "Se3SpaceMouseCfg"):
         """Initialize the space-mouse layer.
 
         Args:
@@ -191,3 +182,13 @@ class Se3SpaceMouse(DeviceBase):
                             self._additional_callbacks["R"]()
                     if data[1] == 3:
                         self._read_rotation = not self._read_rotation
+
+
+@dataclass
+class Se3SpaceMouseCfg(DeviceCfg):
+    """Configuration for SE3 space mouse devices."""
+
+    device_type: type[Se3SpaceMouse] = Se3SpaceMouse
+    pos_sensitivity: float = 0.4
+    rot_sensitivity: float = 0.8
+    retargeters: None = None

@@ -8,7 +8,7 @@
 import torch
 from abc import ABC, abstractmethod
 from collections.abc import Callable
-from dataclasses import dataclass, field
+from dataclasses import dataclass, field, MISSING
 from typing import Any
 
 from isaaclab.devices.retargeter_base import RetargeterBase, RetargeterCfg
@@ -17,7 +17,8 @@ from isaaclab.devices.retargeter_base import RetargeterBase, RetargeterCfg
 @dataclass
 class DeviceCfg:
     """Configuration for teleoperation devices."""
-
+    device_type: type["DeviceBase"] = MISSING
+    teleoperation_active_default: bool = True
     sim_device: str = "cpu"
     retargeters: list[RetargeterCfg] = field(default_factory=list)
 

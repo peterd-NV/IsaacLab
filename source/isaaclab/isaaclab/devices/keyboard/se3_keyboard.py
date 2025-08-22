@@ -18,14 +18,6 @@ import omni
 from ..device_base import DeviceBase, DeviceCfg
 
 
-@dataclass
-class Se3KeyboardCfg(DeviceCfg):
-    """Configuration for SE3 keyboard devices."""
-
-    pos_sensitivity: float = 0.4
-    rot_sensitivity: float = 0.8
-    retargeters: None = None
-
 
 class Se3Keyboard(DeviceBase):
     """A keyboard controller for sending SE(3) commands as delta poses and binary command (open/close).
@@ -58,7 +50,7 @@ class Se3Keyboard(DeviceBase):
 
     """
 
-    def __init__(self, cfg: Se3KeyboardCfg):
+    def __init__(self, cfg: "Se3KeyboardCfg"):
         """Initialize the keyboard layer.
 
         Args:
@@ -202,3 +194,13 @@ class Se3Keyboard(DeviceBase):
             "C": np.asarray([0.0, 0.0, 1.0]) * self.rot_sensitivity,
             "V": np.asarray([0.0, 0.0, -1.0]) * self.rot_sensitivity,
         }
+
+
+@dataclass
+class Se3KeyboardCfg(DeviceCfg):
+    """Configuration for SE3 keyboard devices."""
+
+    device_type: type[Se3Keyboard] = Se3Keyboard
+    pos_sensitivity: float = 0.4
+    rot_sensitivity: float = 0.8
+    retargeters: None = None

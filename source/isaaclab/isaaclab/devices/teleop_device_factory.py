@@ -31,17 +31,6 @@ with contextlib.suppress(ModuleNotFoundError):
     # May fail if xr is not in use
     from isaaclab.devices.openxr import OpenXRDevice, OpenXRDeviceCfg
 
-# Map device types to their constructor and expected config type
-DEVICE_MAP: dict[type[DeviceCfg], type[DeviceBase]] = {
-    Se3KeyboardCfg: Se3Keyboard,
-    Se3SpaceMouseCfg: Se3SpaceMouse,
-    Se3GamepadCfg: Se3Gamepad,
-    Se2KeyboardCfg: Se2Keyboard,
-    Se2GamepadCfg: Se2Gamepad,
-    Se2SpaceMouseCfg: Se2SpaceMouse,
-    OpenXRDeviceCfg: OpenXRDevice,
-}
-
 
 # Map configuration types to their corresponding retargeter classes
 RETARGETER_MAP: dict[type[RetargeterCfg], type[RetargeterBase]] = {
@@ -53,7 +42,7 @@ RETARGETER_MAP: dict[type[RetargeterCfg], type[RetargeterBase]] = {
 
 
 def create_teleop_device(
-    device_name: str, devices_cfg: dict[str, DeviceCfg], callbacks: dict[str, Callable] | None = None
+    env, device_name: str, devices_cfg: dict[str, DeviceCfg], callbacks: dict[str, Callable] | None = None
 ) -> DeviceBase:
     """Create a teleoperation device based on configuration.
 
@@ -76,13 +65,8 @@ def create_teleop_device(
     device_cfg = devices_cfg[device_name]
     callbacks = callbacks or {}
 
-    # Check if device config type is supported
-    cfg_type = type(device_cfg)
-    if cfg_type not in DEVICE_MAP:
-        raise ValueError(f"Unsupported device configuration type: {cfg_type.__name__}")
-
     # Get the constructor for this config type
-    constructor = DEVICE_MAP[cfg_type]
+    constructor = device_cfg.device_type
 
     # Try to create retargeters if they are configured
     retargeters = []
@@ -101,10 +85,13 @@ def create_teleop_device(
 
     # Check if the constructor accepts retargeters parameter
     constructor_params = inspect.signature(constructor).parameters
+    params = {}
     if "retargeters" in constructor_params and retargeters:
-        device = constructor(cfg=device_cfg, retargeters=retargeters)
-    else:
-        device = constructor(cfg=device_cfg)
+        params["retargeters"] = retargeters
+    if "env" in constructor_params:
+        params["env"] = env
+
+    device = constructor(cfg=device_cfg, **params)
 
     # Register callbacks
     for key, callback in callbacks.items():
