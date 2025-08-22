@@ -19,15 +19,6 @@ from ..device_base import DeviceBase, DeviceCfg
 from .utils import convert_buffer
 
 
-@dataclass
-class Se2SpaceMouseCfg(DeviceCfg):
-    """Configuration for SE2 space mouse devices."""
-
-    v_x_sensitivity: float = 0.8
-    v_y_sensitivity: float = 0.4
-    omega_z_sensitivity: float = 1.0
-    sim_device: str = "cpu"
-
 
 class Se2SpaceMouse(DeviceBase):
     r"""A space-mouse controller for sending SE(2) commands as delta poses.
@@ -48,7 +39,7 @@ class Se2SpaceMouse(DeviceBase):
 
     """
 
-    def __init__(self, cfg: Se2SpaceMouseCfg):
+    def __init__(self, cfg: "Se2SpaceMouseCfg"):
         """Initialize the spacemouse layer.
 
         Args:
@@ -168,3 +159,14 @@ class Se2SpaceMouse(DeviceBase):
                         # additional callbacks
                         if "R" in self._additional_callbacks:
                             self._additional_callbacks["R"]
+
+
+@dataclass
+class Se2SpaceMouseCfg(DeviceCfg):
+    """Configuration for SE2 space mouse devices."""
+
+    device_type: type[Se2SpaceMouse] = Se2SpaceMouse
+    v_x_sensitivity: float = 0.8
+    v_y_sensitivity: float = 0.4
+    omega_z_sensitivity: float = 1.0
+    sim_device: str = "cpu"

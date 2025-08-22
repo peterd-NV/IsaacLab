@@ -18,15 +18,6 @@ import omni
 from ..device_base import DeviceBase, DeviceCfg
 
 
-@dataclass
-class Se3GamepadCfg(DeviceCfg):
-    """Configuration for SE3 gamepad devices."""
-
-    dead_zone: float = 0.01  # For gamepad devices
-    pos_sensitivity: float = 1.0
-    rot_sensitivity: float = 1.6
-    retargeters: None = None
-
 
 class Se3Gamepad(DeviceBase):
     """A gamepad controller for sending SE(3) commands as delta poses and binary command (open/close).
@@ -61,7 +52,7 @@ class Se3Gamepad(DeviceBase):
 
     def __init__(
         self,
-        cfg: Se3GamepadCfg,
+        cfg: "Se3GamepadCfg",
     ):
         """Initialize the gamepad layer.
 
@@ -260,3 +251,14 @@ class Se3Gamepad(DeviceBase):
         delta_command[delta_command_sign] *= -1
 
         return delta_command
+
+
+@dataclass
+class Se3GamepadCfg(DeviceCfg):
+    """Configuration for SE3 gamepad devices."""
+
+    device_type: type[Se3Gamepad] = Se3Gamepad
+    dead_zone: float = 0.01  # For gamepad devices
+    pos_sensitivity: float = 1.0
+    rot_sensitivity: float = 1.6
+    retargeters: None = None

@@ -17,14 +17,6 @@ import omni
 from ..device_base import DeviceBase, DeviceCfg
 
 
-@dataclass
-class Se2KeyboardCfg(DeviceCfg):
-    """Configuration for SE2 keyboard devices."""
-
-    v_x_sensitivity: float = 0.8
-    v_y_sensitivity: float = 0.4
-    omega_z_sensitivity: float = 1.0
-
 
 class Se2Keyboard(DeviceBase):
     r"""A keyboard controller for sending SE(2) commands as velocity commands.
@@ -50,7 +42,7 @@ class Se2Keyboard(DeviceBase):
 
     """
 
-    def __init__(self, cfg: Se2KeyboardCfg):
+    def __init__(self, cfg: "Se2KeyboardCfg"):
         """Initialize the keyboard layer.
 
         Args:
@@ -178,3 +170,13 @@ class Se2Keyboard(DeviceBase):
             "NUMPAD_9": np.asarray([0.0, 0.0, -1.0]) * self.omega_z_sensitivity,
             "X": np.asarray([0.0, 0.0, -1.0]) * self.omega_z_sensitivity,
         }
+
+
+@dataclass
+class Se2KeyboardCfg(DeviceCfg):
+    """Configuration for SE2 keyboard devices."""
+
+    device_type: type[Se2Keyboard] = Se2Keyboard
+    v_x_sensitivity: float = 0.8
+    v_y_sensitivity: float = 0.4
+    omega_z_sensitivity: float = 1.0

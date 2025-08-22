@@ -18,15 +18,6 @@ import omni
 from ..device_base import DeviceBase, DeviceCfg
 
 
-@dataclass
-class Se2GamepadCfg(DeviceCfg):
-    """Configuration for SE2 gamepad devices."""
-
-    v_x_sensitivity: float = 1.0
-    v_y_sensitivity: float = 1.0
-    omega_z_sensitivity: float = 1.0
-    dead_zone: float = 0.01
-
 
 class Se2Gamepad(DeviceBase):
     r"""A gamepad controller for sending SE(2) commands as velocity commands.
@@ -54,7 +45,7 @@ class Se2Gamepad(DeviceBase):
 
     def __init__(
         self,
-        cfg: Se2GamepadCfg,
+        cfg: "Se2GamepadCfg",
     ):
         """Initialize the gamepad layer.
 
@@ -209,3 +200,14 @@ class Se2Gamepad(DeviceBase):
         command[command_sign] *= -1
 
         return command
+
+
+@dataclass
+class Se2GamepadCfg(DeviceCfg):
+    """Configuration for SE2 gamepad devices."""
+
+    device_type: type[Se2Gamepad] = Se2Gamepad
+    v_x_sensitivity: float = 1.0
+    v_y_sensitivity: float = 1.0
+    omega_z_sensitivity: float = 1.0
+    dead_zone: float = 0.01
