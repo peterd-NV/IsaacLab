@@ -1,6 +1,15 @@
 Changelog
 ---------
 
+0.12.0 (2026-01-30)
+~~~~~~~~~~~~~~~~~~~~
+
+Changed
+^^^^^^^
+
+* Changed the quaternion ordering to match warp, PhysX, and Newton native XYZW quaternion ordering.
+
+
 0.11.12 (2025-12-16)
 ~~~~~~~~~~~~~~~~~~~~
 
