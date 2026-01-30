@@ -9,8 +9,12 @@ import math
 import re
 from typing import TYPE_CHECKING
 
+from packaging.version import Version
+
 import omni.kit.app
 import omni.kit.commands
+
+from isaaclab.utils.version import get_isaac_sim_version
 
 from .asset_converter_base import AssetConverterBase
 from .urdf_converter_cfg import UrdfConverterCfg
@@ -57,9 +61,17 @@ class UrdfConverter(AssetConverterBase):
         Args:
             cfg: The configuration instance for URDF to USD conversion.
         """
+        # switch to older version of the URDF importer extension
         manager = omni.kit.app.get_app().get_extension_manager()
-        if not manager.is_extension_enabled("isaacsim.asset.importer.urdf"):
-            manager.set_extension_enabled_immediate("isaacsim.asset.importer.urdf", True)
+
+        if get_isaac_sim_version() == Version("5.1"):
+            if not manager.is_extension_enabled("isaacsim.asset.importer.urdf-2.4.31"):
+                manager.set_extension_enabled_immediate("isaacsim.asset.importer.urdf-2.4.31", True)
+        else:
+            if not manager.is_extension_enabled("isaacsim.asset.importer.urdf"):
+                manager.set_extension_enabled_immediate("isaacsim.asset.importer.urdf", True)
+
+        # acquire the URDF interface
         from isaacsim.asset.importer.urdf._urdf import acquire_urdf_interface
 
         self._urdf_interface = acquire_urdf_interface()

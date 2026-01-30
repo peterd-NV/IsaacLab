@@ -107,7 +107,7 @@ def test_render_cfg_presets():
     for rendering_mode in rendering_modes:
         # grab isaac lab apps path
         isaaclab_app_exp_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), *[".."] * 4, "apps")
-        # for Isaac Sim 4.5 compatibility, we use the 4.5 rendering mode app files in a different folder
+        # for Isaac Sim 5 compatibility, we use the 5 rendering mode app files in a different folder
         if get_isaac_sim_version().major < 6:
             isaaclab_app_exp_path = os.path.join(isaaclab_app_exp_path, "isaacsim_5")
 
