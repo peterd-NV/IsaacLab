@@ -9,7 +9,7 @@ from __future__ import annotations
 
 from collections.abc import Callable
 from dataclasses import MISSING
-from typing import Any
+from typing import TYPE_CHECKING, Any
 
 import torch
 
@@ -19,12 +19,18 @@ from isaaclab.utils.noise import NoiseCfg, NoiseModelCfg
 
 from .scene_entity_cfg import SceneEntityCfg
 
+if TYPE_CHECKING:
+    from .action_manager import ActionTerm
+    from .command_manager import CommandTerm
+    from .manager_base import ManagerTermBase
+    from .recorder_manager import RecorderTerm
+
 
 @configclass
 class ManagerTermBaseCfg:
     """Configuration for a manager term."""
 
-    func: Callable | ManagerTermBase = MISSING  # noqa: F821
+    func: Callable | ManagerTermBase = MISSING
     """The function or class to be called for the term.
 
     The function must take the environment object as the first argument.
@@ -56,7 +62,7 @@ class ManagerTermBaseCfg:
 class RecorderTermCfg:
     """Configuration for an recorder term."""
 
-    class_type: type[RecorderTerm] = MISSING  # noqa: F821
+    class_type: type[RecorderTerm] = MISSING
     """The associated recorder term class.
 
     The class should inherit from :class:`isaaclab.managers.recorder_manager.RecorderTerm`.
@@ -72,7 +78,7 @@ class RecorderTermCfg:
 class ActionTermCfg:
     """Configuration for an action term."""
 
-    class_type: type[ActionTerm] = MISSING  # noqa: F821
+    class_type: type[ActionTerm] = MISSING
     """The associated action term class.
 
     The class should inherit from :class:`isaaclab.managers.action_manager.ActionTerm`.
@@ -101,7 +107,7 @@ class ActionTermCfg:
 class CommandTermCfg:
     """Configuration for a command generator term."""
 
-    class_type: type[CommandTerm] = MISSING  # noqa: F821
+    class_type: type[CommandTerm] = MISSING
     """The associated command term class to use.
 
     The class should inherit from :class:`isaaclab.managers.command_manager.CommandTerm`.

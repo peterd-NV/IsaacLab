@@ -25,7 +25,6 @@ import usdrt
 from isaacsim.core.cloner import GridCloner
 
 import isaaclab.sim as sim_utils
-import isaaclab.sim.utils.stage as stage_utils
 from isaaclab.sim.simulation_context import SimulationCfg, SimulationContext
 from isaaclab.utils.assets import ISAACLAB_NUCLEUS_DIR
 from isaaclab.utils.version import get_isaac_sim_version
@@ -62,7 +61,7 @@ def test_stage_in_memory_with_shapes(sim):
 
     # grab stage in memory and set as current stage via the with statement
     stage_in_memory = sim.get_initial_stage()
-    with stage_utils.use_stage(stage_in_memory):
+    with sim_utils.use_stage(stage_in_memory):
         # create cloned cone stage
         for i in range(num_clones):
             sim_utils.create_prim(f"/World/env_{i}", "Xform", translation=(i, i, 0))
@@ -114,7 +113,7 @@ def test_stage_in_memory_with_shapes(sim):
         cfg.func(prim_path_regex, cfg)
 
         # verify stage is in memory
-        assert stage_utils.is_current_stage_in_memory()
+        assert sim_utils.is_current_stage_in_memory()
 
         # verify prims exist in stage in memory
         prims = sim_utils.find_matching_prim_paths(prim_path_regex)
@@ -130,7 +129,7 @@ def test_stage_in_memory_with_shapes(sim):
         sim_utils.attach_stage_to_usd_context()
 
     # verify stage is no longer in memory
-    assert not stage_utils.is_current_stage_in_memory()
+    assert not sim_utils.is_current_stage_in_memory()
 
     # verify prims now exist in context stage
     prims = sim_utils.find_matching_prim_paths(prim_path_regex)
@@ -153,7 +152,7 @@ def test_stage_in_memory_with_usds(sim):
 
     # grab stage in memory and set as current stage via the with statement
     stage_in_memory = sim.get_initial_stage()
-    with stage_utils.use_stage(stage_in_memory):
+    with sim_utils.use_stage(stage_in_memory):
         # create cloned robot stage
         for i in range(num_clones):
             sim_utils.create_prim(f"/World/env_{i}", "Xform", translation=(i, i, 0))
@@ -179,7 +178,7 @@ def test_stage_in_memory_with_usds(sim):
         cfg.func(prim_path_regex, cfg)
 
         # verify stage is in memory
-        assert stage_utils.is_current_stage_in_memory()
+        assert sim_utils.is_current_stage_in_memory()
 
         # verify prims exist in stage in memory
         prims = sim_utils.find_matching_prim_paths(prim_path_regex)
@@ -195,7 +194,7 @@ def test_stage_in_memory_with_usds(sim):
         sim_utils.attach_stage_to_usd_context()
 
     # verify stage is no longer in memory
-    assert not stage_utils.is_current_stage_in_memory()
+    assert not sim_utils.is_current_stage_in_memory()
 
     # verify prims now exist in context stage
     prims = sim_utils.find_matching_prim_paths(prim_path_regex)
@@ -215,7 +214,7 @@ def test_stage_in_memory_with_clone_in_fabric(sim):
 
     # grab stage in memory and set as current stage via the with statement
     stage_in_memory = sim.get_initial_stage()
-    with stage_utils.use_stage(stage_in_memory):
+    with sim_utils.use_stage(stage_in_memory):
         # set up paths
         base_env_path = "/World/envs"
         source_prim_path = f"{base_env_path}/env_0"
@@ -250,10 +249,10 @@ def test_stage_in_memory_with_clone_in_fabric(sim):
         sim_utils.attach_stage_to_usd_context()
 
     # verify stage is no longer in memory
-    assert not stage_utils.is_current_stage_in_memory()
+    assert not sim_utils.is_current_stage_in_memory()
 
     # verify prims now exist in fabric stage using usdrt apis
-    stage_id = stage_utils.get_current_stage_id()
+    stage_id = sim_utils.get_current_stage_id()
     usdrt_stage = usdrt.Usd.Stage.Attach(stage_id)
     for i in range(num_clones):
         prim = usdrt_stage.GetPrimAtPath(f"/World/envs/env_{i}/Robot")
