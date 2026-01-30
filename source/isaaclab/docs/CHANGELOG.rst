@@ -1,13 +1,49 @@
 Changelog
 ---------
 
+1.0.0 (2026-01-27)
+~~~~~~~~~~~~~~~~~~
+
+Added
+^^^^^
+
+* Added albedo annotator for faster diffuse albedo rendering. This path will be the most performant when GUI is not required and only albedo and/or depth annotations are requested.
+
+Changed
+^^^^^^^
+
 * Updated Isaac Lab to be compatible with Isaac Sim 6.0.0.
 * Updated the required Python version to 3.12 for Isaac Lab installation.
 * Updated the required PyTorch version to 2.9.0+cu128 and torchvision to 0.24.0 for Isaac Lab installation.
 * Updated numpy to 2.3.1 following version in Kit 109.0.
 * Updated dex-retargeting to 0.5.0 with numpy 2.0+ dependency.
-* Added albedo annotator for faster diffuse albedo rendering. This path will be the most performant when GUI is not required and only albedo and/or depth annotations are requested.
 * Removed explicit URDF importer extension version dependency in :class:`~isaaclab.sim.converters.urdf_converter.UrdfConverter` and related code.
+
+
+0.54.3 (2026-01-28)
+~~~~~~~~~~~~~~~~~~~
+
+Changed
+^^^^^^^
+
+* Moved :mod:`isaaclab.sensors.tacsl_sensor` to :mod:`isaaclab_contrib.sensors.tacsl_sensor` module,
+  since it is not completely ready for release yet.
+
+
+0.54.2 (2026-01-25)
+~~~~~~~~~~~~~~~~~~~
+
+Added
+^^^^^
+
+* Added test suite for ray caster patterns with comprehensive parameterized tests.
+
+Fixed
+^^^^^
+
+* Fixed incorrect horizontal angle calculation in :func:`~isaaclab.sensors.ray_caster.patterns.patterns.lidar_pattern`
+  that caused the actual angular resolution to differ from the requested resolution.
+
 
 0.54.1 (2026-01-28)
 ~~~~~~~~~~~~~~~~~~~
@@ -16,6 +52,7 @@ Fixed
 ^^^^^
 
 * Teleop: update carb settings to be compatible with Isaac Sim 6.0/Kit XR 110.0
+
 
 0.54.0 (2026-01-13)
 ~~~~~~~~~~~~~~~~~~~
