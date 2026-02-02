@@ -1,7 +1,7 @@
 Changelog
 ---------
 
-1.0.0 (2026-01-27)
+2.0.0 (2026-02-02)
 ~~~~~~~~~~~~~~~~~~
 
 Added
@@ -18,6 +18,34 @@ Changed
 * Updated numpy to 2.3.1 following version in Kit 109.0.
 * Updated dex-retargeting to 0.5.0 with numpy 2.0+ dependency.
 * Removed explicit URDF importer extension version dependency in :class:`~isaaclab.sim.converters.urdf_converter.UrdfConverter` and related code.
+
+
+1.0.0 (2026-01-30)
+~~~~~~~~~~~~~~~~~~~
+
+Added
+^^^^^
+
+* Added a tool to find hard-coded quaternions in the codebase and help user convert them to the new XYZW ordering.
+
+Changed
+^^^^^^^
+
+* Changed the quaternion ordering to match warp, PhysX, and Newton native XYZW quaternion ordering.
+
+
+0.54.4 (2026-01-30)
+~~~~~~~~~~~~~~~~~~~
+
+Added
+^^^^^
+
+* Added :meth:`~isaaclab.utils.timer.Timer.get_timer_statistics` to get the statistics of the elapsed time of a timer.
+
+Changed
+^^^^^^^
+
+* Changed :class:`~isaaclab.utils.timer.Timer` class to use the online Welford's algorithm to compute the mean and standard deviation of the elapsed time.
 
 
 0.54.3 (2026-01-28)
