@@ -1,7 +1,26 @@
 Changelog
 ---------
 
-1.0.0 (2026-01-28)
+0.1.2 (2026-02-03)
+~~~~~~~~~~~~~~~~~~~
+
+Added
+^^^^^
+
+* Added :mod:`isaaclab_physx.test.mock_interfaces` module providing mock PhysX view implementations
+  for unit testing without requiring Isaac Sim. Includes:
+
+  * :class:`MockRigidBodyView`: Mock for ``physx.RigidBodyView`` with transforms, velocities,
+    accelerations, and mass properties.
+  * :class:`MockArticulationView`: Mock for ``physx.ArticulationView`` with root/link states,
+    DOF properties, and joint control.
+  * :class:`MockRigidContactView`: Mock for ``physx.RigidContactView`` with contact forces,
+    positions, normals, and friction data.
+  * Factory functions including pre-configured quadruped and humanoid views.
+  * Patching utilities and decorators for easy test injection.
+
+
+0.1.0 (2026-01-28)
 ~~~~~~~~~~~~~~~~~~
 
 Added
