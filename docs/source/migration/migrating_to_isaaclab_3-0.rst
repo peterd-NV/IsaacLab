@@ -53,6 +53,57 @@ The following asset classes remain in the ``isaaclab`` package and can still be 
 
 These classes now inherit from new abstract base classes but maintain full backward compatibility.
 
+The following sensor classes also remain in the ``isaaclab`` package with unchanged imports:
+
+- :class:`~isaaclab.sensors.ContactSensor`, :class:`~isaaclab.sensors.ContactSensorCfg`, :class:`~isaaclab.sensors.ContactSensorData`
+- :class:`~isaaclab.sensors.Imu`, :class:`~isaaclab.sensors.ImuCfg`, :class:`~isaaclab.sensors.ImuData`
+- :class:`~isaaclab.sensors.FrameTransformer`, :class:`~isaaclab.sensors.FrameTransformerCfg`, :class:`~isaaclab.sensors.FrameTransformerData`
+
+These sensor classes now use factory patterns that automatically instantiate the appropriate backend
+implementation (PhysX by default), maintaining full backward compatibility.
+
+If you need to import the PhysX sensor implementations directly (e.g., for type hints or subclassing),
+you can import from ``isaaclab_physx.sensors``:
+
+.. code-block:: python
+
+   # Direct PhysX implementation imports
+   from isaaclab_physx.sensors import ContactSensor, ContactSensorData
+   from isaaclab_physx.sensors import Imu, ImuData
+   from isaaclab_physx.sensors import FrameTransformer, FrameTransformerData
+
+
+Sensor Pose Properties Deprecation
+----------------------------------
+
+The ``pose_w``, ``pos_w``, and ``quat_w`` properties on :class:`~isaaclab.sensors.ContactSensorData`
+and :class:`~isaaclab.sensors.ImuData` are deprecated and will be removed in a future release.
+
+If you need to track sensor poses in world frame, please use a dedicated sensor such as
+:class:`~isaaclab.sensors.FrameTransformer` instead.
+
+**Before (deprecated):**
+
+.. code-block:: python
+
+   # Using pose properties directly on sensor data
+   sensor_pos = contact_sensor.data.pos_w
+   sensor_quat = contact_sensor.data.quat_w
+
+**After (recommended):**
+
+.. code-block:: python
+
+   # Use FrameTransformer to track sensor pose
+   frame_transformer = FrameTransformer(FrameTransformerCfg(
+       prim_path="{ENV_REGEX_NS}/Robot/base",
+       target_frames=[
+           FrameTransformerCfg.FrameCfg(prim_path="{ENV_REGEX_NS}/Robot/sensor_link"),
+       ],
+   ))
+   sensor_pos = frame_transformer.data.target_pos_w
+   sensor_quat = frame_transformer.data.target_quat_w
+
 
 ``root_physx_view`` Deprecation
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~

@@ -1,6 +1,46 @@
 Changelog
 ---------
 
+1.0.0 (2026-01-28)
+~~~~~~~~~~~~~~~~~~
+
+Added
+^^^^^
+
+* Added :mod:`isaaclab_physx.sensors` module containing PhysX-specific sensor implementations:
+
+  * :class:`~isaaclab_physx.sensors.ContactSensor` and :class:`~isaaclab_physx.sensors.ContactSensorData`:
+    PhysX-specific implementation for contact force sensing. Extends
+    :class:`~isaaclab.sensors.contact_sensor.BaseContactSensor` with PhysX tensor API for contact
+    force queries, contact filtering, and contact point tracking.
+
+  * :class:`~isaaclab_physx.sensors.Imu` and :class:`~isaaclab_physx.sensors.ImuData`:
+    PhysX-specific implementation for inertial measurement unit simulation. Extends
+    :class:`~isaaclab.sensors.imu.BaseImu` with PhysX rigid body views for velocity and
+    acceleration computation.
+
+  * :class:`~isaaclab_physx.sensors.FrameTransformer` and :class:`~isaaclab_physx.sensors.FrameTransformerData`:
+    PhysX-specific implementation for coordinate frame transformations. Extends
+    :class:`~isaaclab.sensors.frame_transformer.BaseFrameTransformer` with PhysX rigid body views
+    for efficient frame pose queries.
+
+* Added PhysX-specific sensor tests moved from ``isaaclab/test/sensors/``:
+
+  * ``test_contact_sensor.py``
+  * ``test_imu.py``
+  * ``test_frame_transformer.py``
+  * ``check_contact_sensor.py``
+  * ``check_imu_sensor.py``
+
+Deprecated
+^^^^^^^^^^
+
+* Deprecated the ``pose_w``, ``pos_w``, and ``quat_w`` properties on
+  :class:`~isaaclab_physx.sensors.ContactSensorData` and :class:`~isaaclab_physx.sensors.ImuData`.
+  These properties will be removed in a future release. Please use a dedicated sensor (e.g.,
+  :class:`~isaaclab.sensors.FrameTransformer`) to measure sensor poses in world frame.
+
+
 0.1.0 (2026-01-28)
 ~~~~~~~~~~~~~~~~~~~
 
