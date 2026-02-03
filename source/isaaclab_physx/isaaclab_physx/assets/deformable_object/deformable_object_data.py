@@ -32,11 +32,11 @@ class DeformableObjectData:
     is older than the current simulation timestamp. The timestamp is updated whenever the data is updated.
     """
 
-    def __init__(self, root_physx_view: physx.SoftBodyView, device: str):
+    def __init__(self, root_view: physx.SoftBodyView, device: str):
         """Initializes the deformable object data.
 
         Args:
-            root_physx_view: The root deformable body view of the object.
+            root_view: The root deformable body view of the object.
             device: The device used for processing.
         """
         # Set the parameters
@@ -44,7 +44,7 @@ class DeformableObjectData:
         # Set the root deformable body view
         # note: this is stored as a weak reference to avoid circular references between the asset class
         #  and the data container. This is important to avoid memory leaks.
-        self._root_physx_view: physx.SoftBodyView = weakref.proxy(root_physx_view)
+        self._root_view: physx.SoftBodyView = weakref.proxy(root_view)
 
         # Set initial time stamp
         self._sim_timestamp = 0.0
@@ -104,7 +104,7 @@ class DeformableObjectData:
     def nodal_pos_w(self):
         """Nodal positions in simulation world frame. Shape is (num_instances, max_sim_vertices_per_body, 3)."""
         if self._nodal_pos_w.timestamp < self._sim_timestamp:
-            self._nodal_pos_w.data = self._root_physx_view.get_sim_nodal_positions()
+            self._nodal_pos_w.data = self._root_view.get_sim_nodal_positions()
             self._nodal_pos_w.timestamp = self._sim_timestamp
         return self._nodal_pos_w.data
 
@@ -112,7 +112,7 @@ class DeformableObjectData:
     def nodal_vel_w(self):
         """Nodal velocities in simulation world frame. Shape is (num_instances, max_sim_vertices_per_body, 3)."""
         if self._nodal_vel_w.timestamp < self._sim_timestamp:
-            self._nodal_vel_w.data = self._root_physx_view.get_sim_nodal_velocities()
+            self._nodal_vel_w.data = self._root_view.get_sim_nodal_velocities()
             self._nodal_vel_w.timestamp = self._sim_timestamp
         return self._nodal_vel_w.data
 
@@ -134,7 +134,8 @@ class DeformableObjectData:
         The rotations are stored as quaternions in the order (x, y, z, w).
         """
         if self._sim_element_quat_w.timestamp < self._sim_timestamp:
-            quats = self._root_physx_view.get_sim_element_rotations().view(self._root_physx_view.count, -1, 4)
+            # convert from xyzw to wxyz
+            quats = self._root_view.get_sim_element_rotations().view(self._root_view.count, -1, 4)
             # set the buffer data and timestamp
             self._sim_element_quat_w.data = quats
             self._sim_element_quat_w.timestamp = self._sim_timestamp
@@ -148,7 +149,8 @@ class DeformableObjectData:
         The rotations are stored as quaternions in the order (x, y, z, w).
         """
         if self._collision_element_quat_w.timestamp < self._sim_timestamp:
-            quats = self._root_physx_view.get_element_rotations().view(self._root_physx_view.count, -1, 4)
+            # convert from xyzw to wxyz
+            quats = self._root_view.get_element_rotations().view(self._root_view.count, -1, 4)
             # set the buffer data and timestamp
             self._collision_element_quat_w.data = quats
             self._collision_element_quat_w.timestamp = self._sim_timestamp
@@ -161,10 +163,8 @@ class DeformableObjectData:
         """
         if self._sim_element_deform_gradient_w.timestamp < self._sim_timestamp:
             # set the buffer data and timestamp
-            self._sim_element_deform_gradient_w.data = (
-                self._root_physx_view.get_sim_element_deformation_gradients().view(
-                    self._root_physx_view.count, -1, 3, 3
-                )
+            self._sim_element_deform_gradient_w.data = self._root_view.get_sim_element_deformation_gradients().view(
+                self._root_view.count, -1, 3, 3
             )
             self._sim_element_deform_gradient_w.timestamp = self._sim_timestamp
         return self._sim_element_deform_gradient_w.data
@@ -176,8 +176,8 @@ class DeformableObjectData:
         """
         if self._collision_element_deform_gradient_w.timestamp < self._sim_timestamp:
             # set the buffer data and timestamp
-            self._collision_element_deform_gradient_w.data = (
-                self._root_physx_view.get_element_deformation_gradients().view(self._root_physx_view.count, -1, 3, 3)
+            self._collision_element_deform_gradient_w.data = self._root_view.get_element_deformation_gradients().view(
+                self._root_view.count, -1, 3, 3
             )
             self._collision_element_deform_gradient_w.timestamp = self._sim_timestamp
         return self._collision_element_deform_gradient_w.data
@@ -189,8 +189,8 @@ class DeformableObjectData:
         """
         if self._sim_element_stress_w.timestamp < self._sim_timestamp:
             # set the buffer data and timestamp
-            self._sim_element_stress_w.data = self._root_physx_view.get_sim_element_stresses().view(
-                self._root_physx_view.count, -1, 3, 3
+            self._sim_element_stress_w.data = self._root_view.get_sim_element_stresses().view(
+                self._root_view.count, -1, 3, 3
             )
             self._sim_element_stress_w.timestamp = self._sim_timestamp
         return self._sim_element_stress_w.data
@@ -202,8 +202,8 @@ class DeformableObjectData:
         """
         if self._collision_element_stress_w.timestamp < self._sim_timestamp:
             # set the buffer data and timestamp
-            self._collision_element_stress_w.data = self._root_physx_view.get_element_stresses().view(
-                self._root_physx_view.count, -1, 3, 3
+            self._collision_element_stress_w.data = self._root_view.get_element_stresses().view(
+                self._root_view.count, -1, 3, 3
             )
             self._collision_element_stress_w.timestamp = self._sim_timestamp
         return self._collision_element_stress_w.data
