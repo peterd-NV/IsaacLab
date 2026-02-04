@@ -43,9 +43,11 @@ install_system_deps() {
     fi
 }
 
-# Returns success (exit code 0 / "true") if the detected Isaac Sim version starts with 4.5,
-# otherwise returns non-zero ("false"). Works with both symlinked binary installs and pip installs.
-is_isaacsim_version_4_5() {
+# Detects Isaac Sim version and returns:
+# - exit code 0 (success) if version starts with 5.X
+# - exit code 1 otherwise
+# Works with both symlinked binary installs and pip installs.
+is_isaacsim_version_5_x() {
     local version=""
     local python_exe
     python_exe=$(extract_python_exe)
@@ -83,8 +85,8 @@ PY
 )
     fi
 
-    # Final decision: return success if version begins with "4.5", 0 if match, 1 otherwise.
-    [[ "$version" == 4.5* ]]
+    # Final decision: return success if version begins with "5.", 0 if match, 1 otherwise.
+    [[ "$version" == 5.* ]]
 }
 
 # check if running in docker
@@ -108,13 +110,12 @@ ensure_cuda_torch() {
 
     # choose pins per arch
     local torch_ver tv_ver cuda_ver
+    torch_ver="2.9.0"
+    tv_ver="0.24.0"
+
     if is_arm; then
-        torch_ver="2.9.0"
-        tv_ver="0.24.0"
         cuda_ver="130"
     else
-        torch_ver="2.7.0"
-        tv_ver="0.22.0"
         cuda_ver="128"
     fi
 
@@ -238,7 +239,7 @@ extract_pip_command() {
     else
         # retrieve the python executable
         python_exe=$(extract_python_exe)
-        pip_command="${python_exe} -m pip install"
+        pip_command="${python_exe} -m pip install --prefer-binary"
     fi
 
     echo ${pip_command}
@@ -356,11 +357,11 @@ setup_conda_env() {
 
         # patch Python version if needed, but back up first
         cp "${ISAACLAB_PATH}/environment.yml"{,.bak}
-        if is_isaacsim_version_4_5; then
-            echo "[INFO] Detected Isaac Sim 4.5 → forcing python=3.10"
-            sed -i 's/^  - python=3\.11/  - python=3.10/' "${ISAACLAB_PATH}/environment.yml"
+        if is_isaacsim_version_5_x; then
+            echo "[INFO] Detected Isaac Sim 5.X → using python=3.11"
+            sed -i 's/^  - python=3\.12/  - python=3.11/' "${ISAACLAB_PATH}/environment.yml"
         else
-            echo "[INFO] Isaac Sim >= 5.0 detected, installing python=3.11"
+            echo "[INFO] Isaac Sim 6.0+ detected, installing python=3.12"
         fi
 
         conda env create -y --file ${ISAACLAB_PATH}/environment.yml -n ${env_name}
@@ -599,6 +600,10 @@ while [[ $# -gt 0 ]]; do
             # LD_PRELOAD is restored below, after installation
             begin_arm_install_sandbox
 
+            # upgrade pip first to avoid compatibility issues
+            echo "[INFO] Upgrading pip..."
+            ${python_exe} -m pip install --upgrade pip
+
             # install pytorch (version based on arch)
             ensure_cuda_torch
             # recursively look into directories and install them
@@ -677,17 +682,17 @@ while [[ $# -gt 0 ]]; do
                 shift # past argument
             fi
             # determine python version based on Isaac Sim version with fallback
-            if is_isaacsim_version_4_5 2>/dev/null; then
-                python_version="3.10"
-                echo "[INFO] Detected Isaac Sim 4.5 → Using Python version: ${python_version}"
-            else
+            if is_isaacsim_version_5_x 2>/dev/null; then
                 python_version="3.11"
-                # Check if we can detect Isaac Sim 5.0+
+                echo "[INFO] Detected Isaac Sim 5.X → Using Python version: ${python_version}"
+            else
+                python_version="3.12"
+                # Check if we can detect Isaac Sim 6.0+
                 if command -v python &>/dev/null && python -c "import isaacsim" 2>/dev/null; then
-                    echo "[INFO] Detected Isaac Sim 5.0+ → Using Python version: ${python_version}"
+                    echo "[INFO] Detected Isaac Sim 6.0+ → Using Python version: ${python_version}"
                 else
                     echo "[INFO] Isaac Sim not detected. Defaulting to Python version: ${python_version}"
-                    echo "[INFO] Note: Python 3.11 works with Isaac Sim 5.0+. Use Python 3.10 for Isaac Sim 4.5."
+                    echo "[INFO] Note: Python 3.12 works with Isaac Sim 6.0+. Use Python 3.11 for Isaac Sim 5.X."
                 fi
             fi
             # setup the uv environment for Isaac Lab

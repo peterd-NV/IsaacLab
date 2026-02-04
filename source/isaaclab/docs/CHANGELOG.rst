@@ -1,6 +1,25 @@
 Changelog
 ---------
 
+3.0.0 (2026-02-02)
+~~~~~~~~~~~~~~~~~~
+
+Added
+^^^^^
+
+* Added albedo annotator for faster diffuse albedo rendering. This path will be the most performant when GUI is not required and only albedo and/or depth annotations are requested.
+
+Changed
+^^^^^^^
+
+* Updated Isaac Lab to be compatible with Isaac Sim 6.0.0.
+* Updated the required Python version to 3.12 for Isaac Lab installation.
+* Updated the required PyTorch version to 2.9.0+cu128 and torchvision to 0.24.0 for Isaac Lab installation.
+* Updated numpy to 2.3.1 following version in Kit 109.0.
+* Updated dex-retargeting to 0.5.0 with numpy 2.0+ dependency.
+* Removed explicit URDF importer extension version dependency in :class:`~isaaclab.sim.converters.urdf_converter.UrdfConverter` and related code.
+
+
 2.1.2 (2026-01-30)
 ~~~~~~~~~~~~~~~~~~~
 
@@ -42,6 +61,7 @@ Added
     :class:`MockWrenchComposer` for flexible mock construction.
   * Factory functions for common robot morphologies (quadruped, humanoid).
   * Patching utilities and decorators for easy test injection.
+
 
 2.1.0 (2026-02-02)
 ~~~~~~~~~~~~~~~~~~~
@@ -159,7 +179,7 @@ Changed
 * Changed the quaternion ordering to match warp, PhysX, and Newton native XYZW quaternion ordering.
 
 
-0.54.3 (2026-01-30)
+0.54.4 (2026-01-30)
 ~~~~~~~~~~~~~~~~~~~
 
 Added
@@ -173,7 +193,7 @@ Changed
 * Changed :class:`~isaaclab.utils.timer.Timer` class to use the online Welford's algorithm to compute the mean and standard deviation of the elapsed time.
 
 
-0.54.2 (2026-01-28)
+0.54.3 (2026-01-28)
 ~~~~~~~~~~~~~~~~~~~
 
 Changed
@@ -183,7 +203,7 @@ Changed
   since it is not completely ready for release yet.
 
 
-0.54.1 (2026-01-25)
+0.54.2 (2026-01-25)
 ~~~~~~~~~~~~~~~~~~~
 
 Added
@@ -196,6 +216,15 @@ Fixed
 
 * Fixed incorrect horizontal angle calculation in :func:`~isaaclab.sensors.ray_caster.patterns.patterns.lidar_pattern`
   that caused the actual angular resolution to differ from the requested resolution.
+
+
+0.54.1 (2026-01-28)
+~~~~~~~~~~~~~~~~~~~
+
+Fixed
+^^^^^
+
+* Teleop: update carb settings to be compatible with Isaac Sim 6.0/Kit XR 110.0
 
 
 0.54.0 (2026-01-13)
@@ -526,8 +555,6 @@ Changed
 
 * Changed import from ``isaaclab.sim.utils`` to ``isaaclab.sim.utils.stage`` in ``isaaclab.devices.openxr.xr_anchor_utils.py``
   to properly propagate the Isaac Sim stage context.
-
-
 
 
 0.48.6 (2025-11-18)
