@@ -1,7 +1,7 @@
 Changelog
 ---------
 
-3.0.0 (2026-02-02)
+=3.0.0 (2026-02-02)
 ~~~~~~~~~~~~~~~~~~
 
 Added
@@ -165,6 +165,7 @@ Migration
 
 * See :ref:`migrating-to-isaaclab-3-0` for detailed migration instructions.
 
+
 1.0.0 (2026-01-30)
 ~~~~~~~~~~~~~~~~~~~
 
@@ -193,7 +194,20 @@ Changed
 * Changed :class:`~isaaclab.utils.timer.Timer` class to use the online Welford's algorithm to compute the mean and standard deviation of the elapsed time.
 
 
-0.54.3 (2026-01-28)
+0.54.3 (2026-02-04)
+~~~~~~~~~~~~~~~~~~~
+
+Fixed
+^^^^^
+
+* Fixed :class:`~isaaclab.envs.mdp.actions.JointPositionToLimitsAction` and
+  :class:`~isaaclab.envs.mdp.actions.EMAJointPositionToLimitsAction` ignoring
+  ``preserve_order=True`` when the number of specified joints matches the total
+  number of joints in the asset. The optimization that replaced joint indices with
+  ``slice(None)`` now correctly checks for the ``preserve_order`` flag.
+
+
+0.54.2 (2026-01-28)
 ~~~~~~~~~~~~~~~~~~~
 
 Changed
