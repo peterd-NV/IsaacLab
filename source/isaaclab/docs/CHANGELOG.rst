@@ -1,7 +1,25 @@
 Changelog
 ---------
 
-=3.0.0 (2026-02-02)
+3.0.2 (2026-02-04)
+~~~~~~~~~~~~~~~~~~
+
+Fixed
+^^^^^
+
+* Removed exact version pinning for URDF asset importer extension that is incompatible with Isaac Sim 6.0.
+
+
+3.0.1 (2026-02-04)
+~~~~~~~~~~~~~~~~~~
+
+Fixed
+^^^^^
+
+* Fixed :file:`isaaclab.sh` to use libstdc++ CXXABI_1.3.15 from conda for systems that lack that version (e.g., Ubuntu 22.04).
+
+
+3.0.0 (2026-02-02)
 ~~~~~~~~~~~~~~~~~~
 
 Added
@@ -180,7 +198,7 @@ Changed
 * Changed the quaternion ordering to match warp, PhysX, and Newton native XYZW quaternion ordering.
 
 
-0.54.4 (2026-01-30)
+0.54.5 (2026-01-30)
 ~~~~~~~~~~~~~~~~~~~
 
 Added
@@ -194,7 +212,7 @@ Changed
 * Changed :class:`~isaaclab.utils.timer.Timer` class to use the online Welford's algorithm to compute the mean and standard deviation of the elapsed time.
 
 
-0.54.3 (2026-02-04)
+0.54.4 (2026-02-04)
 ~~~~~~~~~~~~~~~~~~~
 
 Fixed
@@ -207,7 +225,7 @@ Fixed
   ``slice(None)`` now correctly checks for the ``preserve_order`` flag.
 
 
-0.54.2 (2026-01-28)
+0.54.3 (2026-01-28)
 ~~~~~~~~~~~~~~~~~~~
 
 Changed
