@@ -663,10 +663,7 @@ class DataGenerator:
         for subtask_constraint in self.env_cfg.task_constraint_configs:
             runtime_subtask_constraints_dict.update(subtask_constraint.generate_runtime_subtask_constraints())
 
-        # save generated data in these variables
-        generated_states = []
-        generated_obs = []
-        generated_actions = []
+        # Track success state for the generation
         generated_success = False
 
         # some eef-specific state variables used during generation
@@ -878,12 +875,8 @@ class DataGenerator:
                 env_action_queue=env_action_queue,
             )
 
-            # Update execution state buffers
-            if len(exec_results["states"]) > 0:
-                generated_states.extend(exec_results["states"])
-                generated_obs.extend(exec_results["observations"])
-                generated_actions.extend(exec_results["actions"])
-                generated_success = generated_success or exec_results["success"]
+            # Update success state
+            generated_success = generated_success or exec_results["success"]
 
             # Get the navigation state
             if self.env_cfg.datagen_config.use_navigation_controller:
@@ -982,10 +975,6 @@ class DataGenerator:
             if all(eef_subtasks_done.values()):
                 break
 
-        # Merge numpy arrays
-        if len(generated_actions) > 0:
-            generated_actions = torch.cat(generated_actions, dim=0)
-
         # Set success to the recorded episode data and export to file
         self.env.recorder_manager.set_success_to_episodes(
             env_id_tensor, torch.tensor([[generated_success]], dtype=torch.bool, device=self.env.device)
@@ -995,9 +984,6 @@ class DataGenerator:
 
         results = dict(
             initial_state=new_initial_state,
-            states=generated_states,
-            observations=generated_obs,
-            actions=generated_actions,
             success=generated_success,
         )
         return results

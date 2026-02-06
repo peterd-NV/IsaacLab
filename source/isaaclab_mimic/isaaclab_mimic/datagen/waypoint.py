@@ -381,11 +381,9 @@ class MultiWaypoint:
             env_action_queue: The asyncio queue to put the action into.
 
         Returns:
-            A dictionary containing the state, observation, action, and success of the multi-waypoint actions.
+            A dictionary containing the success status of the multi-waypoint actions.
+            Note: State/observation recording is handled by recorder_manager, not here.
         """
-        # current state
-        state = env.scene.get_state(is_relative=True)
-
         # construct action from target poses and gripper actions
         target_eef_pose_dict = {eef_name: waypoint.pose for eef_name, waypoint in self.waypoints.items()}
         gripper_action_dict = {eef_name: waypoint.gripper_action for eef_name, waypoint in self.waypoints.items()}
@@ -412,18 +410,16 @@ class MultiWaypoint:
 
         # step environment
         if env_action_queue is None:
-            obs, _, _, _, _ = env.step(play_action)
+            env.step(play_action)
         else:
             await env_action_queue.put((env_id, play_action[0]))
             await env_action_queue.join()
-            obs = env.obs_buf
 
         success = bool(success_term.func(env, **success_term.params)[env_id])
 
+        # Note: State/obs recording is handled by recorder_manager, not here.
+        # We only return success status to avoid accumulating large tensors in memory.
         result = dict(
-            states=[state],
-            observations=[obs],
-            actions=[play_action],
             success=success,
         )
         return result
