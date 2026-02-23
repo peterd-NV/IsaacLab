@@ -12,6 +12,8 @@ fault occurs. The launched :class:`isaacsim.simulation_app.SimulationApp` instan
 :attr:`AppLauncher.app` property.
 """
 
+from __future__ import annotations
+
 import argparse
 import contextlib
 import logging
@@ -25,6 +27,8 @@ with contextlib.suppress(ModuleNotFoundError):
     import isaacsim  # noqa: F401
 
 from isaacsim import SimulationApp
+
+from isaaclab.app.settings_manager import get_settings_manager, initialize_carb_settings
 
 # import logger
 logger = logging.getLogger(__name__)
@@ -137,6 +141,8 @@ class AppLauncher:
         self._set_rendering_mode_settings(launcher_args)
         # Set animation recording settings
         self._set_animation_recording_settings(launcher_args)
+        # Set visualizer settings (if requested)
+        self._set_visualizer_settings(launcher_args)
 
         # Hide play button callback if the timeline is stopped
         import omni.timeline
@@ -303,6 +309,13 @@ class AppLauncher:
             action=ExplicitAction,
             default=AppLauncher._APPLAUNCHER_CFG_INFO["device"][1],
             help='The device to run the simulation on. Can be "cpu", "cuda", "cuda:N", where N is the device ID',
+        )
+        arg_group.add_argument(
+            "--visualizer",
+            type=str,
+            nargs="+",
+            default=None,
+            help="Visualizer backends to enable (e.g., kit, newton, rerun).",
         )
         # Add the deprecated cpu flag to raise an error if it is used
         arg_group.add_argument("--cpu", action="store_true", help=argparse.SUPPRESS)
@@ -600,6 +613,19 @@ class AppLauncher:
         else:
             # Headless needs to be a bool to be ingested by SimulationApp
             self._headless = bool(headless_env)
+
+        # If visualizers are explicitly requested and Kit viewport is not among them,
+        # force headless mode so Isaac Sim GUI does not launch unnecessarily.
+        visualizers_arg = launcher_args.get("visualizer")
+        if visualizers_arg:
+            requested_visualizers = {str(v).strip().lower() for v in visualizers_arg if str(v).strip()}
+            if requested_visualizers and "kit" not in requested_visualizers and self._livestream == 0:
+                if not self._headless:
+                    print(
+                        "[INFO][AppLauncher]: Forcing headless mode because '--visualizer' excludes "
+                        "'kit' and livestream is disabled."
+                    )
+                self._headless = True
         # Headless needs to be passed to the SimulationApp so we keep it here
         launcher_args["headless"] = self._headless
 
@@ -843,33 +869,25 @@ class AppLauncher:
 
     def _load_extensions(self):
         """Load correct extensions based on AppLauncher's resolved config member variables."""
-        # These have to be loaded after SimulationApp is initialized
-        import carb
+        # These have to be loaded after SimulationApp is initialized.
+        # Use SettingsManager (backs onto carb when in Omniverse after initialize_carb_settings).
+        initialize_carb_settings()
+        settings = get_settings_manager()
 
-        # Retrieve carb settings for modification
-        carb_settings_iface = carb.settings.get_settings()
+        # set setting to indicate Isaac Lab's offscreen_render pipeline should be enabled
+        settings.set_bool("/isaaclab/render/offscreen", self._offscreen_render)
 
-        # set carb setting to indicate Isaac Lab's offscreen_render pipeline should be enabled
-        # this flag is used by the SimulationContext class to enable the offscreen_render pipeline
-        # when the render() method is called.
-        carb_settings_iface.set_bool("/isaaclab/render/offscreen", self._offscreen_render)
+        # set setting to indicate Isaac Lab's render_viewport pipeline should be enabled
+        settings.set_bool("/isaaclab/render/active_viewport", self._render_viewport)
 
-        # set carb setting to indicate Isaac Lab's render_viewport pipeline should be enabled
-        # this flag is used by the SimulationContext class to enable the render_viewport pipeline
-        # when the render() method is called.
-        carb_settings_iface.set_bool("/isaaclab/render/active_viewport", self._render_viewport)
-
-        # set carb setting to indicate no RTX sensors are used
-        # this flag is set to True when an RTX-rendering related sensor is created
-        # for example: the `Camera` sensor class
-        carb_settings_iface.set_bool("/isaaclab/render/rtx_sensors", False)
+        # set setting to indicate no RTX sensors are used (set to True when RTX sensor is created)
+        settings.set_bool("/isaaclab/render/rtx_sensors", False)
 
         # set fabric update flag to disable updating transforms when rendering is disabled
-        carb_settings_iface.set_bool("/physics/fabricUpdateTransformations", self._rendering_enabled())
+        settings.set_bool("/physics/fabricUpdateTransformations", self._rendering_enabled())
 
-        # in theory, this should ensure that dt is consistent across time stepping, but this is not the case
-        # for now, we use the custom loop runner from Isaac Sim to achieve this
-        carb_settings_iface.set_bool("/app/player/useFixedTimeStepping", False)
+        # use fixed time stepping disabled; custom loop runner from Isaac Sim is used instead
+        settings.set_bool("/app/player/useFixedTimeStepping", False)
 
     def _hide_stop_button(self):
         """Hide the stop button in the toolbar.
@@ -891,9 +909,7 @@ class AppLauncher:
                 play_button_group._stop_button = None  # type: ignore
 
     def _set_rendering_mode_settings(self, launcher_args: dict) -> None:
-        """Store RTX rendering mode in carb settings."""
-        import carb
-
+        """Store RTX rendering mode in settings."""
         rendering_mode = launcher_args.get("rendering_mode")
 
         if rendering_mode is None:
@@ -902,15 +918,10 @@ class AppLauncher:
                 return
             rendering_mode = ""
 
-        # store rendering mode in carb settings
-        carb_settings = carb.settings.get_settings()
-        carb_settings.set_string("/isaaclab/rendering/rendering_mode", rendering_mode)
+        get_settings_manager().set_string("/isaaclab/rendering/rendering_mode", rendering_mode)
 
     def _set_animation_recording_settings(self, launcher_args: dict) -> None:
-        """Store animation recording settings in carb settings."""
-        import carb
-
-        # check if recording is enabled
+        """Store animation recording settings in settings."""
         recording_enabled = launcher_args.get("anim_recording_enabled", False)
         if not recording_enabled:
             return
@@ -922,15 +933,22 @@ class AppLauncher:
                 f" 'anim_recording_stop_time' {launcher_args.get('anim_recording_stop_time')}"
             )
 
-        # grab config
         start_time = launcher_args.get("anim_recording_start_time")
         stop_time = launcher_args.get("anim_recording_stop_time")
 
-        # store config in carb settings
-        carb_settings = carb.settings.get_settings()
-        carb_settings.set_bool("/isaaclab/anim_recording/enabled", recording_enabled)
-        carb_settings.set_float("/isaaclab/anim_recording/start_time", start_time)
-        carb_settings.set_float("/isaaclab/anim_recording/stop_time", stop_time)
+        settings = get_settings_manager()
+        settings.set_bool("/isaaclab/anim_recording/enabled", recording_enabled)
+        settings.set_float("/isaaclab/anim_recording/start_time", start_time)
+        settings.set_float("/isaaclab/anim_recording/stop_time", stop_time)
+
+    def _set_visualizer_settings(self, launcher_args: dict) -> None:
+        """Store visualizer selection in settings."""
+        visualizers = launcher_args.get("visualizer")
+        if not visualizers:
+            return
+        with contextlib.suppress(Exception):
+            visualizer_str = " ".join(visualizers)
+            get_settings_manager().set_string("/isaaclab/visualizer", visualizer_str)
 
     def _interrupt_signal_handle_callback(self, signal, frame):
         """Handle the interrupt signal from the keyboard."""

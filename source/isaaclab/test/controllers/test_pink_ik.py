@@ -29,11 +29,11 @@ import gymnasium as gym
 import numpy as np
 import pytest
 import torch
+import warp as wp
 from pink.configuration import Configuration
 from pink.tasks import FrameTask
 
-import omni.usd
-
+import isaaclab.sim as sim_utils
 from isaaclab.utils.math import axis_angle_from_quat, matrix_from_quat, quat_from_matrix, quat_inv
 
 import isaaclab_tasks  # noqa: F401
@@ -72,7 +72,7 @@ def create_test_env(env_name, num_envs):
     """Create a test environment with the Pink IK controller."""
     device = "cuda:0"
 
-    omni.usd.get_context().new_stage()
+    sim_utils.create_new_stage()
 
     try:
         env_cfg = parse_env_cfg(env_name, device=device, num_envs=num_envs)
@@ -297,7 +297,7 @@ def run_movement_test(test_setup, test_config, test_cfg, aux_function=None):
 def get_link_pose(env, link_name):
     """Get the position and orientation of a link."""
     link_index = env.scene["robot"].data.body_names.index(link_name)
-    link_states = env.scene._articulations["robot"]._data.body_link_state_w
+    link_states = wp.to_torch(env.scene._articulations["robot"].data.body_link_state_w)
     link_pose = link_states[:, link_index, :7]
     return link_pose[:, :3], link_pose[:, 3:7]
 
@@ -350,7 +350,7 @@ def compute_errors(
     isaaclab_controlled_joint_ids = action_term._isaaclab_controlled_joint_ids
 
     # Get current and target positions for controlled joints only
-    curr_joints = articulation.data.joint_pos[:, isaaclab_controlled_joint_ids].cpu().numpy()[0]
+    curr_joints = wp.to_torch(articulation.data.joint_pos)[:, isaaclab_controlled_joint_ids].cpu().numpy()[0]
     target_joints = action_term.processed_actions[:, : len(isaaclab_controlled_joint_ids)].cpu().numpy()[0]
 
     # Reorder joints for Pink IK (using controlled joint ordering)

@@ -14,9 +14,7 @@ import numpy as np
 import torch
 import warp as wp
 
-import omni
-from isaacsim.core.simulation_manager import SimulationManager
-from pxr import UsdGeom, UsdPhysics
+from pxr import Gf, Usd, UsdGeom, UsdPhysics
 
 import isaaclab.sim as sim_utils
 import isaaclab.utils.math as math_utils
@@ -144,7 +142,7 @@ class RayCaster(SensorBase):
         super()._initialize_impl()
         # obtain global simulation view
 
-        self._physics_sim_view = SimulationManager.get_physics_sim_view()
+        self._physics_sim_view = sim_utils.SimulationContext.instance().physics_manager.get_physics_sim_view()
         prim = sim_utils.find_first_matching_prim(self.cfg.prim_path)
         if prim is None:
             available_prims = ",".join([str(p.GetPath()) for p in sim_utils.get_current_stage().Traverse()])
@@ -190,7 +188,10 @@ class RayCaster(SensorBase):
                 mesh_prim = UsdGeom.Mesh(mesh_prim)
                 # read the vertices and faces
                 points = np.asarray(mesh_prim.GetPointsAttr().Get())
-                transform_matrix = np.array(omni.usd.get_world_transform_matrix(mesh_prim)).T
+                # Get world transform using pure USD (UsdGeom.Xformable)
+                xformable = UsdGeom.Xformable(mesh_prim)
+                world_transform: Gf.Matrix4d = xformable.ComputeLocalToWorldTransform(Usd.TimeCode.Default())
+                transform_matrix = np.array(world_transform).T
                 points = np.matmul(points, transform_matrix[:3, :3].T)
                 points += transform_matrix[:3, 3]
                 indices = np.asarray(mesh_prim.GetFaceVertexIndicesAttr().Get())

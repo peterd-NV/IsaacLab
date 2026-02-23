@@ -14,9 +14,9 @@ import numpy as np
 import torch
 import warp as wp
 
-import carb
 from pxr import UsdGeom
 
+from isaaclab.app.settings_manager import get_settings_manager
 from isaaclab.sim.views import XformPrimView
 from isaaclab.utils.warp.kernels import reshape_tiled_image
 
@@ -28,6 +28,7 @@ if TYPE_CHECKING:
 
 
 class TiledCamera(Camera):
+    SIMPLE_SHADING_AOV: str = "SimpleShadingSD"
     r"""The tiled rendering based camera sensor for acquiring the same data as the Camera class.
 
     This class inherits from the :class:`Camera` class but uses the tiled-rendering API to acquire
@@ -44,6 +45,9 @@ class TiledCamera(Camera):
     - ``"distance_to_camera"``: An image containing the distance to camera optical center.
     - ``"distance_to_image_plane"``: An image containing distances of 3D points from camera plane along camera's z-axis.
     - ``"depth"``: Alias for ``"distance_to_image_plane"``.
+    - ``"simple_shading_constant_diffuse"``: Simple shading (constant diffuse) RGB approximation.
+    - ``"simple_shading_diffuse_mdl"``: Simple shading (diffuse MDL) RGB approximation.
+    - ``"simple_shading_full_mdl"``: Simple shading (full MDL) RGB approximation.
     - ``"normals"``: An image containing the local surface normal vectors at each pixel.
     - ``"motion_vectors"``: An image containing the motion vector data at each pixel.
     - ``"semantic_segmentation"``: The semantic segmentation data.
@@ -141,8 +145,7 @@ class TiledCamera(Camera):
             RuntimeError: If the number of camera prims in the view does not match the number of environments.
             RuntimeError: If replicator was not found.
         """
-        carb_settings_iface = carb.settings.get_settings()
-        if not carb_settings_iface.get("/isaaclab/cameras_enabled"):
+        if not get_settings_manager().get("/isaaclab/cameras_enabled"):
             raise RuntimeError(
                 "A camera was spawned without the --enable_cameras flag. Please use --enable_cameras to enable"
                 " rendering."
@@ -182,6 +185,14 @@ class TiledCamera(Camera):
         rp = rep.create.render_product_tiled(cameras=cam_prim_paths, tile_resolution=(self.cfg.width, self.cfg.height))
         self._render_product_paths = [rp.path]
 
+        if any(data_type in self.SIMPLE_SHADING_MODES for data_type in self.cfg.data_types):
+            rep.AnnotatorRegistry.register_annotator_from_aov(
+                aov=self.SIMPLE_SHADING_AOV, output_data_type=np.uint8, output_channels=4
+            )
+            # Set simple shading mode (if requested) before rendering
+            simple_shading_mode = self._resolve_simple_shading_mode()
+            if simple_shading_mode is not None:
+                get_settings_manager().set_int(self.SIMPLE_SHADING_MODE_SETTING, simple_shading_mode)
         # Define the annotators based on requested data types
         self._annotators = dict()
         for annotator_type in self.cfg.data_types:
@@ -198,6 +209,11 @@ class TiledCamera(Camera):
                     "DiffuseAlbedoSD", device=self.device, do_array_copy=False
                 )
                 self._annotators["albedo"] = annotator
+            elif annotator_type in self.SIMPLE_SHADING_MODES:
+                annotator = rep.AnnotatorRegistry.get_annotator(
+                    self.SIMPLE_SHADING_AOV, device=self.device, do_array_copy=False
+                )
+                self._annotators[annotator_type] = annotator
             elif annotator_type == "depth" or annotator_type == "distance_to_image_plane":
                 # keep depth for backwards compatibility
                 annotator = rep.AnnotatorRegistry.get_annotator(
@@ -277,6 +293,8 @@ class TiledCamera(Camera):
             # For normals, we only require the first three channels of the tiled buffer
             # Note: Not doing this breaks the alignment of the data (check: https://github.com/isaac-sim/IsaacLab/issues/4239)
             if data_type == "normals":
+                tiled_data_buffer = tiled_data_buffer[:, :, :3].contiguous()
+            if data_type in self.SIMPLE_SHADING_MODES:
                 tiled_data_buffer = tiled_data_buffer[:, :, :3].contiguous()
 
             wp.launch(
@@ -359,6 +377,11 @@ class TiledCamera(Camera):
             data_dict["albedo"] = torch.zeros(
                 (self._view.count, self.cfg.height, self.cfg.width, 4), device=self.device, dtype=torch.uint8
             ).contiguous()
+        for data_type in self.SIMPLE_SHADING_MODES:
+            if data_type in self.cfg.data_types:
+                data_dict[data_type] = torch.zeros(
+                    (self._view.count, self.cfg.height, self.cfg.width, 3), device=self.device, dtype=torch.uint8
+                ).contiguous()
         if "distance_to_image_plane" in self.cfg.data_types:
             data_dict["distance_to_image_plane"] = torch.zeros(
                 (self._view.count, self.cfg.height, self.cfg.width, 1), device=self.device, dtype=torch.float32

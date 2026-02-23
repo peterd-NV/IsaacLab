@@ -22,13 +22,11 @@ import importlib
 import numpy as np
 import pytest
 import torch
+from isaaclab_teleop.deprecated.openxr import OpenXRDevice, OpenXRDeviceCfg, XrCfg
 
 import carb
-import omni.usd
-from isaacsim.core.prims import XFormPrim
 
-from isaaclab.devices import OpenXRDevice, OpenXRDeviceCfg
-from isaaclab.devices.openxr import XrCfg
+import isaaclab.sim as sim_utils
 from isaaclab.devices.retargeter_base import RetargeterBase, RetargeterCfg
 from isaaclab.envs import ManagerBasedEnv, ManagerBasedEnvCfg
 from isaaclab.scene import InteractiveSceneCfg
@@ -141,7 +139,7 @@ def mock_xrcore(mocker):
     head_mock.get_virtual_world_pose.return_value = pose_matrix_mock
 
     # Patch the modules
-    device_mod = importlib.import_module("isaaclab.devices.openxr.openxr_device")
+    device_mod = importlib.import_module("isaaclab_teleop.deprecated.openxr.openxr_device")
     mocker.patch.object(device_mod, "XRCore", xr_core_mock)
     mocker.patch.object(device_mod, "XRPoseValidityFlags", xr_pose_validity_flags_mock)
 
@@ -160,7 +158,7 @@ def mock_xrcore(mocker):
 def empty_env():
     """Fixture to create and cleanup an empty environment."""
     # Create a new stage
-    omni.usd.get_context().new_stage()
+    sim_utils.create_new_stage()
     # Create environment with config
     env_cfg = EmptyEnvCfg()
     env = ManagerBasedEnv(cfg=env_cfg)
@@ -175,17 +173,19 @@ def empty_env():
 def test_xr_anchor(empty_env, mock_xrcore):
     """Test XR anchor creation and configuration."""
     env, env_cfg = empty_env
-    env_cfg.xr = XrCfg(anchor_pos=(1, 2, 3), anchor_rot=(1, 0, 0, 0))
+    # Use xyzw format for quaternion: identity is (0, 0, 0, 1)
+    env_cfg.xr = XrCfg(anchor_pos=(1, 2, 3), anchor_rot=(0, 0, 0, 1))
 
     device = OpenXRDevice(OpenXRDeviceCfg(xr_cfg=env_cfg.xr))
 
     # Check that the xr anchor prim is created with the correct pose
-    xr_anchor_prim = XFormPrim("/World/XRAnchor")
-    assert xr_anchor_prim.is_valid()
+    xr_anchor_view = sim_utils.XformPrimView("/World/XRAnchor")
+    assert xr_anchor_view.count == 1
 
-    position, orientation = xr_anchor_prim.get_world_poses()
-    np.testing.assert_almost_equal(position.tolist(), [[1, 2, 3]])
-    np.testing.assert_almost_equal(orientation.tolist(), [[1, 0, 0, 0]])
+    position, orientation = xr_anchor_view.get_world_poses()
+    np.testing.assert_almost_equal(position.numpy(), [[1, 2, 3]])
+    # XformPrimView returns quaternion in xyzw format, identity is [0, 0, 0, 1]
+    np.testing.assert_almost_equal(orientation.numpy(), [[0, 0, 0, 1]])
 
     # Check that xr anchor mode and custom anchor are set correctly
     assert carb.settings.get_settings().get("/persistent/xr/anchorMode") == "custom anchor"
@@ -202,12 +202,12 @@ def test_xr_anchor_default(empty_env, mock_xrcore):
     device = OpenXRDevice(OpenXRDeviceCfg())
 
     # Check that the xr anchor prim is created with the correct default pose
-    xr_anchor_prim = XFormPrim("/World/XRAnchor")
-    assert xr_anchor_prim.is_valid()
+    xr_anchor_view = sim_utils.XformPrimView("/World/XRAnchor")
+    assert xr_anchor_view.count == 1
 
-    position, orientation = xr_anchor_prim.get_world_poses()
-    np.testing.assert_almost_equal(position.tolist(), [[0, 0, 0]])
-    np.testing.assert_almost_equal(orientation.tolist(), [[0, 0, 0, 1]])
+    position, orientation = xr_anchor_view.get_world_poses()
+    np.testing.assert_almost_equal(position.numpy().tolist(), [[0, 0, 0]])
+    np.testing.assert_almost_equal(orientation.numpy().tolist(), [[0, 0, 0, 1]])
 
     # Check that xr anchor mode and custom anchor are set correctly
     assert carb.settings.get_settings().get("/persistent/xr/anchorMode") == "custom anchor"
@@ -225,12 +225,12 @@ def test_xr_anchor_multiple_devices(empty_env, mock_xrcore):
     device_2 = OpenXRDevice(OpenXRDeviceCfg())
 
     # Check that the xr anchor prim is created with the correct default pose
-    xr_anchor_prim = XFormPrim("/World/XRAnchor")
-    assert xr_anchor_prim.is_valid()
+    xr_anchor_view = sim_utils.XformPrimView("/World/XRAnchor")
+    assert xr_anchor_view.count == 1
 
-    position, orientation = xr_anchor_prim.get_world_poses()
-    np.testing.assert_almost_equal(position.tolist(), [[0, 0, 0]])
-    np.testing.assert_almost_equal(orientation.tolist(), [[0, 0, 0, 1]])
+    position, orientation = xr_anchor_view.get_world_poses()
+    np.testing.assert_almost_equal(position.numpy().tolist(), [[0, 0, 0]])
+    np.testing.assert_almost_equal(orientation.numpy().tolist(), [[0, 0, 0, 1]])
 
     # Check that xr anchor mode and custom anchor are set correctly
     assert carb.settings.get_settings().get("/persistent/xr/anchorMode") == "custom anchor"

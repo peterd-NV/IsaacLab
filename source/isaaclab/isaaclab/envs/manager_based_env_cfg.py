@@ -9,6 +9,8 @@ This module defines the general configuration of the environment. It includes pa
 configuring the environment instances, viewer settings, and simulation parameters.
 """
 
+from __future__ import annotations
+
 from dataclasses import MISSING, field
 
 import isaaclab.envs.mdp as mdp
@@ -142,6 +144,17 @@ class ManagerBasedEnvCfg:
 
     teleop_devices: DevicesCfg = field(default_factory=DevicesCfg)
     """Configuration for teleoperation devices."""
+
+    isaac_teleop: object | None = None
+    """Configuration for IsaacTeleop-based teleoperation.
+
+    When set, the environment uses the IsaacTeleop stack for XR teleoperation instead
+    of the native Isaac Lab teleop devices. This should be a IsaacTeleopCfg instance
+    from the isaaclab_teleop package.
+
+    The teleop scripts will automatically detect this configuration and use the
+    IsaacTeleop stack when present.
+    """
 
     export_io_descriptors: bool = False
     """Whether to export the IO descriptors for the environment. Defaults to False."""

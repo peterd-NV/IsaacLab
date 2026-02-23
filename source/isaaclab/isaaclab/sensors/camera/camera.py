@@ -15,12 +15,11 @@ import numpy as np
 import torch
 from packaging import version
 
-import carb
-import omni.usd
 from pxr import Sdf, UsdGeom
 
 import isaaclab.sim as sim_utils
 import isaaclab.utils.sensors as sensor_utils
+from isaaclab.app.settings_manager import get_settings_manager
 from isaaclab.sim.views import XformPrimView
 from isaaclab.utils import to_camel_case
 from isaaclab.utils.array import convert_to_torch
@@ -56,6 +55,9 @@ class Camera(SensorBase):
     - ``"distance_to_camera"``: An image containing the distance to camera optical center.
     - ``"distance_to_image_plane"``: An image containing distances of 3D points from camera plane along camera's z-axis.
     - ``"depth"``: The same as ``"distance_to_image_plane"``.
+    - ``"simple_shading_constant_diffuse"``: Simple shading (constant diffuse) RGB approximation.
+    - ``"simple_shading_diffuse_mdl"``: Simple shading (diffuse MDL) RGB approximation.
+    - ``"simple_shading_full_mdl"``: Simple shading (full MDL) RGB approximation.
     - ``"normals"``: An image containing the local surface normal vectors at each pixel.
     - ``"motion_vectors"``: An image containing the motion vector data at each pixel.
     - ``"semantic_segmentation"``: The semantic segmentation data.
@@ -94,6 +96,14 @@ class Camera(SensorBase):
     }
     """The set of sensor types that are not supported by the camera class."""
 
+    SIMPLE_SHADING_MODES: dict[str, int] = {
+        "simple_shading_constant_diffuse": 0,
+        "simple_shading_diffuse_mdl": 1,
+        "simple_shading_full_mdl": 2,
+    }
+    SIMPLE_SHADING_AOV: str = "SimpleShadingSD"
+    SIMPLE_SHADING_MODE_SETTING: str = "/rtx/sdg/simpleShading/mode"
+
     def __init__(self, cfg: CameraCfg):
         """Initializes the camera sensor.
 
@@ -121,25 +131,35 @@ class Camera(SensorBase):
 
         # toggle rendering of rtx sensors as True
         # this flag is read by SimulationContext to determine if rtx sensors should be rendered
-        carb_settings_iface = carb.settings.get_settings()
-        carb_settings_iface.set_bool("/isaaclab/render/rtx_sensors", True)
+        settings = get_settings_manager()
+        settings.set_bool("/isaaclab/render/rtx_sensors", True)
 
         # This is only introduced in isaac sim 6.0
-        isaac_sim_version = sim_utils.SimulationContext.instance().get_version()
-        if isaac_sim_version[0] >= 6:
+        isaac_sim_version = get_isaac_sim_version()
+        if isaac_sim_version.major >= 6:
             # Set RTX flag to enable fast path if only depth or albedo is requested
             supported_fast_types = {"distance_to_camera", "distance_to_image_plane", "depth", "albedo"}
             if all(data_type in supported_fast_types for data_type in self.cfg.data_types):
-                carb_settings_iface.set_bool("/rtx/sdg/force/disableColorRender", True)
+                settings.set_bool("/rtx/sdg/force/disableColorRender", True)
 
             # If we have GUI / viewport enabled, we turn off fast path so that the viewport is not black
-            if sim_utils.SimulationContext.instance().has_gui():
-                carb_settings_iface.set_bool("/rtx/sdg/force/disableColorRender", False)
+            if settings.get("/isaaclab/has_gui"):
+                settings.set_bool("/rtx/sdg/force/disableColorRender", False)
         else:
             if "albedo" in self.cfg.data_types:
                 logger.warning(
                     "Albedo annotator is only supported in Isaac Sim 6.0+. The albedo data type will be ignored."
                 )
+            if any(data_type in self.SIMPLE_SHADING_MODES for data_type in self.cfg.data_types):
+                logger.warning(
+                    "Simple shading annotators are only supported in Isaac Sim 6.0+. The simple shading data types"
+                    " will be ignored."
+                )
+
+        # Set simple shading mode (if requested) before rendering
+        simple_shading_mode = self._resolve_simple_shading_mode()
+        if simple_shading_mode is not None:
+            settings.set_int(self.SIMPLE_SHADING_MODE_SETTING, simple_shading_mode)
 
         # spawn the asset
         if self.cfg.spawn is not None:
@@ -294,11 +314,8 @@ class Camera(SensorBase):
                 # convert numpy scalar to Python float for USD compatibility (NumPy 2.0+)
                 if isinstance(param_value, np.floating):
                     param_value = float(param_value)
-                # set value
-                # note: We have to do it this way because the camera might be on a different
-                #   layer (default cameras are on session layer), and this is the simplest
-                #   way to set the property on the right layer.
-                omni.usd.set_prop_val(param_attr(), param_value)
+                # set value using pure USD API
+                param_attr().Set(param_value)
         # update the internal buffers
         self._update_intrinsic_matrices(env_ids)
 
@@ -413,8 +430,7 @@ class Camera(SensorBase):
             RuntimeError: If the number of camera prims in the view does not match the number of environments.
             RuntimeError: If replicator was not found.
         """
-        carb_settings_iface = carb.settings.get_settings()
-        if not carb_settings_iface.get("/isaaclab/cameras_enabled"):
+        if not get_settings_manager().get("/isaaclab/cameras_enabled"):
             raise RuntimeError(
                 "A camera was spawned without the --enable_cameras flag. Please use --enable_cameras to enable"
                 " rendering."
@@ -505,9 +521,19 @@ class Camera(SensorBase):
                     rep.AnnotatorRegistry.register_annotator_from_aov(
                         aov="DiffuseAlbedoSD", output_data_type=np.uint8, output_channels=4
                     )
+                if name in self.SIMPLE_SHADING_MODES:
+                    rep.AnnotatorRegistry.register_annotator_from_aov(
+                        aov=self.SIMPLE_SHADING_AOV, output_data_type=np.uint8, output_channels=4
+                    )
 
                 # Map special cases to their corresponding annotator names
-                special_cases = {"rgba": "rgb", "depth": "distance_to_image_plane", "albedo": "DiffuseAlbedoSD"}
+                simple_shading_cases = {key: self.SIMPLE_SHADING_AOV for key in self.SIMPLE_SHADING_MODES}
+                special_cases = {
+                    "rgba": "rgb",
+                    "depth": "distance_to_image_plane",
+                    "albedo": "DiffuseAlbedoSD",
+                    **simple_shading_cases,
+                }
                 # Get the annotator name, falling back to the original name if not a special case
                 annotator_name = special_cases.get(name, name)
                 # Create the annotator node
@@ -735,9 +761,24 @@ class Camera(SensorBase):
         # motion vectors return (x, y) in first 2 channels, 3rd and 4th channels are unused
         elif name == "motion_vectors":
             data = data[..., :2]
+        elif name in self.SIMPLE_SHADING_MODES:
+            data = data[..., :3]
 
         # return the data and info
         return data, info
+
+    def _resolve_simple_shading_mode(self) -> int | None:
+        """Resolve the requested simple shading mode from data types."""
+        requested = [data_type for data_type in self.cfg.data_types if data_type in self.SIMPLE_SHADING_MODES]
+        if not requested:
+            return None
+        if len(requested) > 1:
+            logger.warning(
+                "Multiple simple shading modes requested (%s). Using '%s' only.",
+                requested,
+                requested[0],
+            )
+        return self.SIMPLE_SHADING_MODES[requested[0]]
 
     """
     Internal simulation callbacks.
