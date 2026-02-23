@@ -197,6 +197,6 @@ class StackEnvCfg(ManagerBasedRLEnvCfg):
         self.sim.physics = PhysxCfg(
             bounce_threshold_velocity=0.01,
             gpu_found_lost_aggregate_pairs_capacity=1024 * 1024 * 4,
-            gpu_total_aggregate_pairs_capacity=16 * 1024,
+            gpu_total_aggregate_pairs_capacity=2**21,  # min ~16441 for many envs; 2**21 gives headroom
             friction_correlation_distance=0.00625,
         )
