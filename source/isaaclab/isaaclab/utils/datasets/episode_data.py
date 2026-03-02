@@ -110,14 +110,12 @@ class EpisodeData:
         current_dataset_pointer = self._data
         for sub_key_index in range(len(sub_keys)):
             if sub_key_index == len(sub_keys) - 1:
-                if value.is_cuda:
-                    stored = value.cpu()
-                else:
-                    stored = value.clone()
+                # Add value to the final dict layer
+                # Use lists to prevent slow tensor copy during concatenation
                 if sub_keys[sub_key_index] not in current_dataset_pointer:
-                    current_dataset_pointer[sub_keys[sub_key_index]] = [stored]
+                    current_dataset_pointer[sub_keys[sub_key_index]] = [value.clone()]
                 else:
-                    current_dataset_pointer[sub_keys[sub_key_index]].append(stored)
+                    current_dataset_pointer[sub_keys[sub_key_index]].append(value.clone())
                 break
             # key index
             if sub_keys[sub_key_index] not in current_dataset_pointer:

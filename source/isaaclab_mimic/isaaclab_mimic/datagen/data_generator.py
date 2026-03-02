@@ -6,6 +6,7 @@
 """Base class for data generator."""
 
 import asyncio
+import contextlib
 import copy
 import logging
 from typing import Any
@@ -31,6 +32,16 @@ from isaaclab_mimic.datagen.selection_strategy import make_selection_strategy
 from isaaclab_mimic.datagen.waypoint import MultiWaypoint, Waypoint, WaypointSequence, WaypointTrajectory
 
 from .datagen_info_pool import DataGenInfoPool
+
+
+@contextlib.asynccontextmanager
+async def _optional_lock(lock):
+    """Async context manager that acquires the lock only if it is not None."""
+    if lock is not None:
+        async with lock:
+            yield
+    else:
+        yield
 
 
 def transform_source_data_segment_using_delta_object_pose(
@@ -691,7 +702,9 @@ class DataGenerator:
 
         # While loop that runs per time step
         while True:
-            async with self.src_demo_datagen_info_pool.asyncio_lock:
+            # Yield so other envs' data generator tasks can run (concurrent progress)
+            await asyncio.sleep(0)
+            async with _optional_lock(self.src_demo_datagen_info_pool.asyncio_lock):
                 if len(self.src_demo_datagen_info_pool.datagen_infos) > prev_src_demo_datagen_info_pool_size:
                     # src_demo_datagen_info_pool at this point may be updated with new demos,
                     # So we need to update subtask boundaries again
@@ -867,6 +880,9 @@ class DataGenerator:
 
                 eef_waypoint_dict[eef_name] = waypoint
             multi_waypoint = MultiWaypoint(eef_waypoint_dict)
+
+            # Yield before execute so other envs' tasks can run (spread CPU-bound work across tasks)
+            await asyncio.sleep(0)
 
             # Execute the next waypoints for all eefs
             exec_results = await multi_waypoint.execute(

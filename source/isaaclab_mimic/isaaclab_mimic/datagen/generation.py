@@ -71,6 +71,7 @@ async def run_data_generator(
             num_failures += 1
         num_attempts += 1
 
+import time
 
 def env_loop(
     env: ManagerBasedRLMimicEnv,
@@ -104,14 +105,16 @@ def env_loop(
 
             actions = torch.zeros(env.action_space.shape)
 
-            # get actions from all the data generators
-            for i in range(env.num_envs):
-                # an async-blocking call to get an action from a data generator
-                env_id, action = asyncio_event_loop.run_until_complete(env_action_queue.get())
+            # get actions from all the data generators concurrently (allows tasks to run in any order)
+            get_tasks = [env_action_queue.get() for _ in range(env.num_envs)]
+            results = asyncio_event_loop.run_until_complete(asyncio.gather(*get_tasks))
+            for env_id, action in results:
                 actions[env_id] = action
 
+            time_start = time.time()
             # perform action on environment
             env.step(actions)
+            print(f"step time: {time.time() - time_start}")
 
             # mark done so the data generators can continue with the step results
             for i in range(env.num_envs):
@@ -230,8 +233,7 @@ def setup_async_generation(
     asyncio_event_loop = asyncio.get_event_loop()
     env_reset_queue = asyncio.Queue()
     env_action_queue = asyncio.Queue()
-    shared_datagen_info_pool_lock = asyncio.Lock()
-    shared_datagen_info_pool = DataGenInfoPool(env, env.cfg, env.device, asyncio_lock=shared_datagen_info_pool_lock)
+    shared_datagen_info_pool = DataGenInfoPool(env, env.cfg, env.device)
     shared_datagen_info_pool.load_from_dataset_file(input_file)
     print(f"Loaded {shared_datagen_info_pool.num_datagen_infos} to datagen info pool")
 
