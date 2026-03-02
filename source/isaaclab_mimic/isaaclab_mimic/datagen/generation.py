@@ -71,8 +71,6 @@ async def run_data_generator(
             num_failures += 1
         num_attempts += 1
 
-import time
-
 def env_loop(
     env: ManagerBasedRLMimicEnv,
     env_reset_queue: asyncio.Queue,
@@ -111,10 +109,8 @@ def env_loop(
             for env_id, action in results:
                 actions[env_id] = action
 
-            time_start = time.time()
             # perform action on environment
             env.step(actions)
-            print(f"step time: {time.time() - time_start}")
 
             # mark done so the data generators can continue with the step results
             for i in range(env.num_envs):

@@ -335,13 +335,15 @@ class RecorderManager(ManagerBase):
                 self.add_to_episodes(f"{key}/{sub_key}", sub_value, env_ids)
             return
 
+        if isinstance(value, wp.array):
+            value = wp.to_torch(value)
+        # Clone once for the whole batch so we can pass per-env slices without each episode cloning.
+        value = value.clone()
         for value_index, env_id in enumerate(env_ids):
             if env_id not in self._episodes:
                 self._episodes[env_id] = EpisodeData()
                 self._episodes[env_id].env_id = env_id
-            if isinstance(value, wp.array):
-                value = wp.to_torch(value)
-            self._episodes[env_id].add(key, value[value_index])
+            self._episodes[env_id].add(key, value[value_index], clone=False)
 
     def set_success_to_episodes(self, env_ids: Sequence[int] | None, success_values: torch.Tensor):
         """Sets the task success values to the episodes for the given environment ids.
