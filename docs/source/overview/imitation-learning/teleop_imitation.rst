@@ -141,45 +141,6 @@ If using the pre-recorded dataset, skip the next section and proceed directly to
    Use of the pre-recorded dataset is optional.
 
 
-What is Isaac Lab Mimic?
-^^^^^^^^^^^^^^^^^^^^^^^^
-
-Isaac Lab Mimic (Mimic) is a trajectory data generation tool that can be used to
-augment human demonstrations by generating new synthetic data. Given a set of human demonstrations,
-Mimic can automatically generate new demonstrations involving the same task but with different spatial configurations.
-The generated data can be used to train imitation learning policies that are more robust to spatial variations
-even if just a handful of manual demonstrations are available.
-
-Mimic works by taking a set of human demonstrations and splitting each demonstration into a sequence of subtasks.
-Subtasks are defined based on reference objects that dictate the motion of the robot's end-effectors (eefs). Each subtask
-is a contiguous segment of the demonstration where the eef's motion is dictated by a single reference object. A new subtask begins
-when the reference object changes. Annotations mark points in the demonstration where a subtask is completed.
-
-   #Create folder for datasets
-   mkdir -p datasets
-
-   # Collect data with a selected teleoperation device. Replace <teleop_device> with your preferred input device.
-   # Recommended options: spacemouse, keyboard
-   ./isaaclab.sh -p scripts/tools/record_demos.py --task Isaac-Stack-Cube-Franka-IK-Rel-v0 --visualizer kit --teleop_device <teleop_device> --dataset_file ./datasets/dataset.hdf5 --num_demos 10
-
-In the following section, we will show how to collect a small batch of human demonstrations for a stacking task
-with the Franka robot and then increase the size of the dataset by generating new synthetic data using Isaac Lab Mimic.
-
-   The order of the stacked cubes should be blue (bottom), red (middle), green (top).
-
-Collect 10 successful demonstrations before proceeding with the next step.
-
-Here are some tips to perform demonstrations that lead to successful policy training:
-
-* Keep demonstrations short. Shorter demonstrations mean fewer decisions for the policy, making training easier.
-* Take a direct path. Do not follow along arbitrary axis, but move straight toward the goal.
-* Do not pause. Perform smooth, continuous motions instead. It is not obvious for a policy why and when to pause, hence continuous motions are easier to learn.
-
-If a mistake is made while performing a demonstration, press the ``R`` key (if using a keyboard) or the
-right button (if using a SpaceMouse) to discard the current demonstration and reset to a new starting position.
-
-
-
 Collecting demonstrations
 ^^^^^^^^^^^^^^^^^^^^^^^^^
 
