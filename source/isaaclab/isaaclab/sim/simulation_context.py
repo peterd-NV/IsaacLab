@@ -23,6 +23,7 @@ import isaaclab.sim.utils.stage as stage_utils
 from isaaclab.app.settings_manager import SettingsManager
 from isaaclab.physics import PhysicsManager
 from isaaclab.sim.utils import create_new_stage
+from isaaclab.utils.version import has_kit
 from isaaclab.visualizers import KitVisualizerCfg, NewtonVisualizerCfg, RerunVisualizerCfg, Visualizer
 
 from .scene_data_providers import SceneDataProvider
@@ -124,7 +125,7 @@ class SimulationContext:
 
         # When Kit is running, attach the stage to Kit's USD context so that
         # Kit extensions (PhysX views, Articulation, viewport) can discover it.
-        if sim_utils.has_kit():
+        if has_kit():
             import omni.usd
 
             kit_context = omni.usd.get_context()
@@ -163,6 +164,10 @@ class SimulationContext:
         # Simulation state
         self._is_playing = False
         self._is_stopped = True
+
+        # Monotonic physics-step counter used by camera sensors for
+        self._physics_step_count: int = 0
+
         type(self)._instance = self  # Mark as valid singleton only after successful init
 
     def _apply_render_cfg_settings(self) -> None:
@@ -469,18 +474,25 @@ class SimulationContext:
         self._is_stopped = False
 
     def step(self, render: bool = True) -> None:
-        """Step physics, update visualizers, and optionally render.
+        """Step physics and optionally render.
 
         Args:
             render: Whether to render the scene after stepping. Defaults to True.
         """
+        self._physics_step_count += 1
         self.physics_manager.step()
-        if render:
+        if render and self.is_rendering:
             self.render()
 
     def render(self, mode: int | None = None) -> None:
-        """Render the scene via all active visualizers."""
+        """Update visualizers and render the scene.
+
+        Calls update_visualizers() so visualizers run at the render cadence (not at
+        every physics step). Camera sensors drive their configured renderer when
+        fetching data, so this method remains backend-agnostic.
+        """
         self.update_visualizers(self.get_rendering_dt())
+
         # Call render callbacks
         if hasattr(self, "_render_callbacks"):
             for callback in self._render_callbacks.values():
@@ -600,21 +612,8 @@ class SimulationContext:
                     close_provider()
                 cls._instance._scene_data_provider = None
 
-            # Remove stage from cache
-            stage_cache = UsdUtils.StageCache.Get()
-            stage_id = stage_cache.GetId(cls._instance.stage).ToLongInt()  # type: ignore[union-attr]
-            if stage_id > 0:
-                stage_cache.Erase(cls._instance.stage)  # type: ignore[union-attr]
-
-            # Clear thread-local stage context
-            if hasattr(stage_utils._context, "stage"):
-                delattr(stage_utils._context, "stage")
-
-            # Close the USD context stage (symmetric with attach in __init__)
-            if sim_utils.has_kit():
-                import omni.usd
-
-                omni.usd.get_context().close_stage()
+            # Close the stage (clears cache, thread-local context, and Kit USD context)
+            stage_utils.close_stage()
 
             # Clear instance
             cls._instance = None

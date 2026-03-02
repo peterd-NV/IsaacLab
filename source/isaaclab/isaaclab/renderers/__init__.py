@@ -3,5 +3,12 @@
 #
 # SPDX-License-Identifier: BSD-3-Clause
 
-from .renderer import Renderer
-from .newton_warp_renderer import NewtonWarpRenderer
+"""Sub-package for renderer configurations and implementations.
+
+This sub-package contains configuration classes and implementations for
+different renderer backends that can be used with Isaac Lab.
+"""
+
+from isaaclab.utils.module import lazy_export
+
+lazy_export()

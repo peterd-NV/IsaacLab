@@ -33,11 +33,14 @@ class FactoryBase:
         cls._registry[name] = sub_class
         logger.info(f"Registered backend {name!r} for factory {cls.__name__}.")
 
+    @classmethod
+    def _get_backend(cls, *args, **kwargs) -> str:
+        """Return the backend name for this factory. Override in subclasses to dispatch by config."""
+        return "physx"  # Backwards compatibility with old code.
+
     def __new__(cls, *args, **kwargs):
         """Create a new instance of an implementation based on the backend."""
-
-        # TODO: Make the backend configurable.
-        backend = "physx"
+        backend = cls._get_backend(*args, **kwargs)
 
         if cls == FactoryBase:
             raise TypeError("FactoryBase cannot be instantiated directly. Please subclass it.")
@@ -49,7 +52,8 @@ class FactoryBase:
             module_name = f"isaaclab_{backend}.{cls._module_subpath}"
             try:
                 module = importlib.import_module(module_name)
-                module_class = getattr(module, cls.__name__)
+                class_name = getattr(cls, "_backend_class_names", {}).get(backend, cls.__name__)
+                module_class = getattr(module, class_name)
                 # Manually register the class
                 cls.register(backend, module_class)
 
@@ -67,7 +71,7 @@ class FactoryBase:
             available = list(cls.get_registry_keys())
             raise ValueError(
                 f"Unknown backend {backend!r} for {cls.__name__}. "
-                f"A module was found at '{module_name}', but it did not contain a class with the name {cls.__name__}.\n"
+                f"A module was found at '{module_name}', but it did not contain a class with the name {class_name!r}.\n"
                 f"Currently available backends: {available}."
             ) from None
         # Return an instance of the chosen class.

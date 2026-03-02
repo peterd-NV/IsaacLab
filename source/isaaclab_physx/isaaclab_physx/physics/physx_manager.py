@@ -66,6 +66,9 @@ _PHYSICS_EVENT_TO_ISAAC_EVENT: dict[PhysicsEvent, IsaacEvents] = {
     PhysicsEvent.PHYSICS_READY: IsaacEvents.PHYSICS_READY,
     PhysicsEvent.STOP: IsaacEvents.TIMELINE_STOP,
 }
+_PHYSICS_EVENT_VALUE_TO_ISAAC_EVENT: dict[str, IsaacEvents] = {
+    event.value: isaac_event for event, isaac_event in _PHYSICS_EVENT_TO_ISAAC_EVENT.items()
+}
 
 
 class AnimationRecorder:
@@ -221,7 +224,10 @@ class PhysxManager(PhysicsManager):
             # Ensure views are created (warmup only happens once per stage)
             if cls._view is None:
                 cls._warmup_and_create_views()
-            # Always dispatch PHYSICS_READY on hard reset to initialize newly registered sensors
+            # Deterministic lifecycle dispatch for backend-agnostic callbacks.
+            # This avoids relying on asynchronous event-bus ordering during env construction.
+            cls.dispatch_event(PhysicsEvent.PHYSICS_READY, payload={})
+            # Legacy IsaacEvents dispatch for callbacks registered directly on IsaacEvents.
             cls._event_bus.dispatch_event(IsaacEvents.PHYSICS_READY.value, payload={})
 
         device = PhysicsManager._device
@@ -371,6 +377,8 @@ class PhysxManager(PhysicsManager):
     ) -> Any:
         """Subscribe to PhysX events. Maps PhysicsEvent → IsaacEvents."""
         isaac_event = _PHYSICS_EVENT_TO_ISAAC_EVENT.get(event)
+        if isaac_event is None:
+            isaac_event = _PHYSICS_EVENT_VALUE_TO_ISAAC_EVENT.get(getattr(event, "value", event))
         return cls._subscribe_isaac(callback, isaac_event, order, name) if isaac_event else None
 
     @classmethod
@@ -582,8 +590,15 @@ class PhysxManager(PhysicsManager):
 
         stage_id = get_current_stage_id()
 
-        # Attach stage to PhysX BEFORE loading/starting - critical for GPU pipeline
-        cls._physx_sim.attach_stage(stage_id)
+        is_gpu = "cuda" in PhysicsManager.get_device()
+
+        # Attach stage to PhysX BEFORE loading/starting - only needed for GPU pipeline.
+        # For CPU, the old SimulationManager never called attach_stage() explicitly.
+        # Calling attach_stage() + force_load_physics_from_usd() together causes a
+        # double-initialization that corrupts the CPU broadphase (MBP) collision setup,
+        # causing objects to fall through surfaces non-deterministically.
+        if is_gpu:
+            cls._physx_sim.attach_stage(stage_id)
 
         # warmup physx
         cls._physx.force_load_physics_from_usd()
@@ -610,6 +625,7 @@ class PhysxManager(PhysicsManager):
         cls._view_created = True
 
         cls._event_bus.dispatch_event(IsaacEvents.SIMULATION_VIEW_CREATED.value, payload={})
+        cls.dispatch_event(PhysicsEvent.PHYSICS_READY, payload={})
         cls._event_bus.dispatch_event(IsaacEvents.PHYSICS_READY.value, payload={})
 
     @classmethod

@@ -7,7 +7,6 @@
 
 from __future__ import annotations
 
-import builtins
 import contextlib
 import logging
 import os
@@ -251,7 +250,7 @@ def use_stage(stage: Usd.Stage) -> Generator[None, None, None]:
         ...     pass
         >>> # operate on the default stage attached to the USD context
     """
-    if get_isaac_sim_version().major < 5:
+    if has_kit() and get_isaac_sim_version().major < 5:
         logger.warning("Isaac Sim < 5.0 does not support thread-local stage contexts. Skipping use_stage().")
         yield  # no-op
     else:
@@ -372,6 +371,9 @@ def save_stage(usd_path: str, save_and_reload_in_place: bool = True) -> bool:
 def close_stage() -> bool:
     """Closes the current USD stage by clearing the stage cache.
 
+    If Kit is running, this also closes the stage attached to the Kit USD context
+    (``omni.usd.get_context().close_stage()``).
+
     .. note::
 
         Once the stage is closed, it is necessary to open a new stage or create a
@@ -389,6 +391,12 @@ def close_stage() -> bool:
     stage_cache = UsdUtils.StageCache.Get()
     stage_cache.Clear()
     _context.stage = None
+
+    if has_kit():
+        import omni.usd
+
+        omni.usd.get_context().close_stage()
+
     return True
 
 
@@ -463,8 +471,7 @@ def clear_stage(predicate: Callable[[Usd.Prim], bool] | None = None) -> None:
     prim_paths_to_delete = [prim.GetPath().pathString for prim in prims]
     # delete prims
     delete_prim(prim_paths_to_delete)
-
-    if builtins.ISAAC_LAUNCHED_FROM_TERMINAL is False:  # type: ignore
+    if has_kit():
         omni.kit.app.get_app_interface().update()
 
 
