@@ -71,6 +71,7 @@ async def run_data_generator(
             num_failures += 1
         num_attempts += 1
 
+
 def env_loop(
     env: ManagerBasedRLMimicEnv,
     env_reset_queue: asyncio.Queue,
@@ -151,6 +152,7 @@ def setup_env_config(
     device: str,
     generation_num_trials: int | None = None,
     recorder_cfg: RecorderManagerBaseCfg | None = None,
+    disable_hdf5_compression: bool = False,
 ) -> tuple[Any, Any]:
     """Configure the environment for data generation.
 
@@ -196,6 +198,9 @@ def setup_env_config(
         env_cfg.recorders = recorder_cfg
     env_cfg.recorders.dataset_export_dir_path = output_dir
     env_cfg.recorders.dataset_filename = output_file_name
+
+    if disable_hdf5_compression:
+        env_cfg.recorders.disable_hdf5_compression = True
 
     if env_cfg.datagen_config.generation_keep_failed:
         env_cfg.recorders.dataset_export_mode = DatasetExportMode.EXPORT_SUCCEEDED_FAILED_IN_SEPARATE_FILES

@@ -55,6 +55,9 @@ class RecorderManagerBaseCfg:
     export_in_close: bool = False
     """Whether to export episodes in the close call."""
 
+    disable_hdf5_compression: bool = False
+    """Disable HDF5 compression."""
+
 
 class RecorderTerm(ManagerTermBase):
     """Base class for recorder terms.
@@ -515,7 +518,9 @@ class RecorderManager(ManagerBase):
                 if target_dataset_file_handler is not None:
                     # Use corresponding demo_id if provided, otherwise None
                     current_demo_id = demo_ids[i] if demo_ids is not None else None
-                    target_dataset_file_handler.write_episode(self._episodes[env_id], current_demo_id)
+                    target_dataset_file_handler.write_episode(
+                        self._episodes[env_id], current_demo_id, self.cfg.disable_hdf5_compression
+                    )
                     need_to_flush = True
                 # Update episode count
                 if episode_succeeded:
@@ -569,6 +574,7 @@ class RecorderManager(ManagerBase):
                 "dataset_export_mode",
                 "export_in_record_pre_reset",
                 "export_in_close",
+                "disable_hdf5_compression",
             ]:
                 continue
             # check if term config is None
