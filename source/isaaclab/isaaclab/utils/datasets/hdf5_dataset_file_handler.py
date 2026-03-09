@@ -210,7 +210,9 @@ class HDF5DatasetFileHandler(DatasetFileHandlerBase):
 
         return episode
 
-    def write_episode(self, episode: EpisodeData, demo_id: int | None = None):
+    def write_episode(
+        self, episode: EpisodeData, demo_id: int | None = None, disable_dataset_compression: bool = False
+    ):
         """Add an episode to the dataset.
 
         Args:
@@ -251,7 +253,10 @@ class HDF5DatasetFileHandler(DatasetFileHandlerBase):
                 for sub_key, sub_value in value.items():
                     create_dataset_helper(key_group, sub_key, sub_value)
             else:
-                group.create_dataset(key, data=value.cpu().numpy(), compression="gzip")
+                if not disable_dataset_compression:
+                    group.create_dataset(key, data=value.cpu().numpy(), compression="gzip", compression_opts=2)
+                else:
+                    group.create_dataset(key, data=value.cpu().numpy())
 
         for key, value in episode.data.items():
             create_dataset_helper(h5_episode_group, key, value)

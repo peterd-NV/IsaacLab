@@ -103,11 +103,9 @@ def env_loop(
                     env_reset_queue.task_done()
 
             actions = torch.zeros(env.action_space.shape)
-
-            # get actions from all the data generators
-            for i in range(env.num_envs):
-                # an async-blocking call to get an action from a data generator
-                env_id, action = asyncio_event_loop.run_until_complete(env_action_queue.get())
+            get_tasks = [env_action_queue.get() for _ in range(env.num_envs)]
+            results = asyncio_event_loop.run_until_complete(asyncio.gather(*get_tasks))
+            for env_id, action in results:
                 actions[env_id] = action
 
             # perform action on environment
@@ -152,6 +150,7 @@ def setup_env_config(
     device: str,
     generation_num_trials: int | None = None,
     recorder_cfg: RecorderManagerBaseCfg | None = None,
+    disable_dataset_compression: bool = False,
 ) -> tuple[Any, Any]:
     """Configure the environment for data generation.
 
@@ -162,6 +161,8 @@ def setup_env_config(
         num_envs: Number of environments to run
         device: Device to run on
         generation_num_trials: Optional override for number of trials
+        recorder_cfg: Recorder manager configuration
+        disable_dataset_compression: Whether to disable dataset compression
 
     Returns:
         tuple containing:
@@ -198,6 +199,9 @@ def setup_env_config(
     env_cfg.recorders.dataset_export_dir_path = output_dir
     env_cfg.recorders.dataset_filename = output_file_name
 
+    if disable_dataset_compression:
+        env_cfg.recorders.disable_dataset_compression = True
+
     if env_cfg.datagen_config.generation_keep_failed:
         env_cfg.recorders.dataset_export_mode = DatasetExportMode.EXPORT_SUCCEEDED_FAILED_IN_SEPARATE_FILES
     else:
@@ -230,8 +234,7 @@ def setup_async_generation(
     asyncio_event_loop = asyncio.get_event_loop()
     env_reset_queue = asyncio.Queue()
     env_action_queue = asyncio.Queue()
-    shared_datagen_info_pool_lock = asyncio.Lock()
-    shared_datagen_info_pool = DataGenInfoPool(env, env.cfg, env.device, asyncio_lock=shared_datagen_info_pool_lock)
+    shared_datagen_info_pool = DataGenInfoPool(env, env.cfg, env.device)
     shared_datagen_info_pool.load_from_dataset_file(input_file)
     print(f"Loaded {shared_datagen_info_pool.num_datagen_infos} to datagen info pool")
 

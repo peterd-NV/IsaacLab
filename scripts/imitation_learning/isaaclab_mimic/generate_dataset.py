@@ -38,6 +38,12 @@ parser.add_argument(
     default=False,
     help="use skillgen to generate motion trajectories",
 )
+parser.add_argument(
+    "--disable_dataset_compression",
+    action="store_true",
+    help="Disable dataset compression",
+)
+
 # append AppLauncher cli args
 AppLauncher.add_app_launcher_args(parser)
 # parse the arguments
@@ -88,6 +94,7 @@ def main():
         num_envs=num_envs,
         device=args_cli.device,
         generation_num_trials=args_cli.generation_num_trials,
+        disable_dataset_compression=args_cli.disable_dataset_compression,
     )
 
     # Create environment
