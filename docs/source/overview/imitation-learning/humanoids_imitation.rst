@@ -16,6 +16,17 @@ This page covers data generation and imitation learning workflows for humanoid r
    understand the data collection, annotation, and generation steps of Isaac Lab Mimic.
 
 
+Installation
+~~~~~~~~~~~~
+
+The following demos require the `nvidia-srl-usd-to-urdf <https://pypi.org/project/nvidia-srl-usd-to-urdf/>`_ package.
+Install it by running the following command:
+
+.. code:: bash
+
+   pip install nvidia-srl-usd-to-urdf
+
+
 Demo 1: Data Generation and Policy Training for a Humanoid Robot
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 

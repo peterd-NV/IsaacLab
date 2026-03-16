@@ -225,6 +225,13 @@ If you specified a custom install directory with ``--cloudxr-install-dir``, sour
    You can add the ``source`` line to your shell profile (e.g. ``~/.bashrc``) so the
    CloudXR environment is configured automatically in every new terminal.
 
+.. important::
+   The embodiment used in the demo requires the `nvidia-srl-usd-to-urdf <https://pypi.org/project/nvidia-srl-usd-to-urdf/>`_ package. Install it by running the following command:
+
+   .. code-block:: bash
+
+      pip install nvidia-srl-usd-to-urdf
+
 With the CloudXR runtime running in a separate terminal (see :ref:`start-cloudxr-runtime`),
 launch an Isaac Lab teleoperation script:
 
