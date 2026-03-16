@@ -1,6 +1,15 @@
 Changelog
 ---------
 
+0.3.4 (2026-03-15)
+~~~~~~~~~~~~~~~~~~~
+
+Changed
+^^^^^^^
+
+* Remove nvidia-srl-usd-to-urdf dependency to isaaclab_teleop extension. The package is now included with Isaac Sim 6.0.
+
+
 0.3.3 (2026-03-13)
 ~~~~~~~~~~~~~~~~~~~
 

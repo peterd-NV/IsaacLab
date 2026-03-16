@@ -1,6 +1,15 @@
 Changelog
 ---------
 
+1.2.4 (2026-03-15)
+~~~~~~~~~~~~~~~~~~~
+
+Changed
+^^^^^^^
+
+* Remove nvidia-srl-usd-to-urdf dependency to isaaclab_mimic extension. The package is now included with Isaac Sim 6.0.
+
+
 1.2.3 (2026-03-12)
 ~~~~~~~~~~~~~~~~~~~
 

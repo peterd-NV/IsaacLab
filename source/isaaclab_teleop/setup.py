@@ -19,10 +19,6 @@ EXTENSION_TOML_DATA = toml.load(os.path.join(EXTENSION_PATH, "config", "extensio
 # Minimum dependencies required prior to installation
 INSTALL_REQUIRES = []
 
-# nvidia-srl-usd-to-urdf depends on usd-core which has no aarch64 wheels
-if platform.machine() != "aarch64":
-    INSTALL_REQUIRES.append("nvidia-srl-usd-to-urdf")
-
 # Installation operation
 setup(
     name="isaaclab_teleop",
