@@ -6,7 +6,6 @@
 """Installation script for the 'isaaclab_teleop' python package."""
 
 import os
-import platform
 
 import toml
 from setuptools import find_packages, setup
