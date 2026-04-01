@@ -3,7 +3,7 @@
 #
 # SPDX-License-Identifier: Apache-2.0
 
-"""Test dataset generation for Isaac-PickPlace-GR1T2-Abs-Mimic-v0."""
+"""Test dataset generation for Isaac-NutPour-GR1T2-Pink-IK-Abs-Mimic-v0."""
 
 from isaaclab.app import AppLauncher
 
@@ -20,12 +20,13 @@ import pytest
 
 from isaaclab.utils.assets import ISAACLAB_NUCLEUS_DIR, retrieve_file_path
 
-_TASK_NAME = "Isaac-PickPlace-GR1T2-Abs-Mimic-v0"
+_TASK_NAME = "Isaac-NutPour-GR1T2-Pink-IK-Abs-Mimic-v0"
 DATASETS_DOWNLOAD_DIR = tempfile.mkdtemp(suffix=f"_{_TASK_NAME}")
 NUCLEUS_ANNOTATED_DATASET_PATH = os.path.join(
     ISAACLAB_NUCLEUS_DIR, "Tests", "Mimic", "TODO_FILL_IN_ENV_NAME", "annotated_dataset.hdf5"
 )
-# _LOCAL_ANNOTATED_DATASET = "/home/peterd/workspaces/IsaacLab/datasets/dataset_annotated_gr1.hdf5"
+# TODO: REMOVE LOCAL DATASET PATH
+# _LOCAL_ANNOTATED_DATASET = "/home/peterd/workspaces/IsaacLab/datasets/annotated_dataset_gr1_nut_pouring_test.hdf5"
 
 _SUBPROCESS_TIMEOUT = 1800
 _SUBPROCESS_GRACE_PERIOD = 15
@@ -62,7 +63,7 @@ def _run_script(command: list[str]) -> subprocess.CompletedProcess:
 
 
 @pytest.fixture
-def setup_pickplace_gr1t2_test_environment():
+def setup_nutpour_gr1t2_test_environment():
     """Download the pre-annotated dataset and prepare the test environment."""
     if not os.path.exists(DATASETS_DOWNLOAD_DIR):
         os.makedirs(DATASETS_DOWNLOAD_DIR)
@@ -80,7 +81,7 @@ def setup_pickplace_gr1t2_test_environment():
         f"retrieve_file_path returned '{downloaded_dataset_path}' but the file does not exist on disk."
     )
 
-    # To use a local dataset instead of Nucleus, comment out the block above and uncomment:
+    # TODO: REMOVE LOCAL DATASET PATH
     # downloaded_dataset_path = _LOCAL_ANNOTATED_DATASET
     # assert os.path.isfile(downloaded_dataset_path), (
     #     f"Local annotated dataset not found at {downloaded_dataset_path}"
@@ -115,12 +116,13 @@ def _run_generation(workflow_root: str, input_file: str, output_file: str, num_e
         str(num_envs),
         "--generation_num_trials",
         "1",
+        "--enable_cameras",
         "--headless",
     ]
 
     result = _run_script(command)
 
-    print(f"PickPlace GR1T2 dataset generation result (num_envs={num_envs}):")
+    print(f"NutPour GR1T2 dataset generation result (num_envs={num_envs}):")
     print(result.stdout)
     print(result.stderr)
 
@@ -137,16 +139,16 @@ def _run_generation(workflow_root: str, input_file: str, output_file: str, num_e
 
 
 @pytest.mark.isaacsim_ci
-def test_generate_dataset_pickplace_gr1t2(setup_pickplace_gr1t2_test_environment):
-    """Test dataset generation for the GR1T2 pick-place environment (single env)."""
-    workflow_root, input_file = setup_pickplace_gr1t2_test_environment
+def test_generate_dataset_gr1t2_nutpour(setup_nutpour_gr1t2_test_environment):
+    """Test dataset generation for the GR1T2 nut-pour environment (single env)."""
+    workflow_root, input_file = setup_nutpour_gr1t2_test_environment
     output_file = os.path.join(DATASETS_DOWNLOAD_DIR, "generated_dataset.hdf5")
     _run_generation(workflow_root, input_file, output_file, num_envs=1)
 
 
 @pytest.mark.isaacsim_ci
-def test_generate_dataset_pickplace_gr1t2_multi_env(setup_pickplace_gr1t2_test_environment):
-    """Test dataset generation for the GR1T2 pick-place environment (5 envs)."""
-    workflow_root, input_file = setup_pickplace_gr1t2_test_environment
+def test_generate_dataset_gr1t2_nutpour_multi_env(setup_nutpour_gr1t2_test_environment):
+    """Test dataset generation for the GR1T2 nut-pour environment (5 envs)."""
+    workflow_root, input_file = setup_nutpour_gr1t2_test_environment
     output_file = os.path.join(DATASETS_DOWNLOAD_DIR, "generated_dataset_multi_env.hdf5")
     _run_generation(workflow_root, input_file, output_file, num_envs=5)

@@ -172,23 +172,17 @@ def setup_test_environment():
         del os.environ["PYTHONUNBUFFERED"]
 
 
-@pytest.mark.isaacsim_ci
-def test_generate_dataset(setup_test_environment):
-    """Test the dataset generation script."""
-    workflow_root = setup_test_environment
-
-    annotated_input_path = os.path.join(DATASETS_DOWNLOAD_DIR, "annotated_dataset.hdf5")
-    generated_output_path = os.path.join(DATASETS_DOWNLOAD_DIR, "generated_dataset.hdf5")
-
-    # Define the command to run the dataset generation script directly
-    # (bypassing isaaclab.sh — see fixture comments for rationale).
+def _run_generation(workflow_root: str, input_file: str, output_file: str, num_envs: int):
+    """Build the generation command, run it, and assert success."""
     command = [
         sys.executable,
         os.path.join(workflow_root, "scripts/imitation_learning/isaaclab_mimic/generate_dataset.py"),
         "--input_file",
-        annotated_input_path,
+        input_file,
         "--output_file",
-        generated_output_path,
+        output_file,
+        "--num_envs",
+        str(num_envs),
         "--generation_num_trials",
         "1",
         "--headless",
@@ -196,22 +190,35 @@ def test_generate_dataset(setup_test_environment):
 
     result = _run_script(command)
 
-    # Print the result for debugging purposes
-    print("Dataset generation result:")
-    print(result.stdout)  # Print standard output from the command
-    print(result.stderr)  # Print standard error from the command
+    print(f"State-based dataset generation result (num_envs={num_envs}):")
+    print(result.stdout)
+    print(result.stderr)
 
-    # Verify the generated dataset file was created.
-    # Note: we cannot rely solely on the exit code because the Kit runtime may
-    # reset it to 0 during cleanup, so we check the output file and stdout.
-    assert os.path.exists(generated_output_path), (
-        f"Generated dataset file was not created at {generated_output_path}.\n"
+    assert os.path.exists(output_file), (
+        f"Generated dataset file was not created at {output_file}.\n"
         f"returncode: {result.returncode}\nstderr: {result.stderr}"
     )
 
-    # Check for the expected completion message in output
     combined_output = result.stdout + "\n" + result.stderr
     expected_output = "successes/attempts. Exiting"
     assert expected_output in combined_output, (
         f"Could not find '{expected_output}' in output.\nstdout: {result.stdout}\nstderr: {result.stderr}"
     )
+
+
+@pytest.mark.isaacsim_ci
+def test_generate_dataset_franka_state(setup_test_environment):
+    """Test dataset generation for the state-based cube-stack environment (single env)."""
+    workflow_root = setup_test_environment
+    annotated_input_path = os.path.join(DATASETS_DOWNLOAD_DIR, "annotated_dataset.hdf5")
+    generated_output_path = os.path.join(DATASETS_DOWNLOAD_DIR, "generated_dataset.hdf5")
+    _run_generation(workflow_root, annotated_input_path, generated_output_path, num_envs=1)
+
+
+@pytest.mark.isaacsim_ci
+def test_generate_dataset_franka_state_multi_env(setup_test_environment):
+    """Test dataset generation for the state-based cube-stack environment (5 envs)."""
+    workflow_root = setup_test_environment
+    annotated_input_path = os.path.join(DATASETS_DOWNLOAD_DIR, "annotated_dataset.hdf5")
+    generated_output_path = os.path.join(DATASETS_DOWNLOAD_DIR, "generated_dataset_multi_env.hdf5")
+    _run_generation(workflow_root, annotated_input_path, generated_output_path, num_envs=5)
