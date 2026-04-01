@@ -4,8 +4,7 @@
 # SPDX-License-Identifier: BSD-3-Clause
 
 
-from isaaclab.assets import ArticulationCfg
-from isaaclab.assets import RigidObjectCfg
+from isaaclab.assets import ArticulationCfg, RigidObjectCfg
 from isaaclab.controllers.differential_ik_cfg import DifferentialIKControllerCfg
 from isaaclab.envs.mdp.actions.actions_cfg import DifferentialInverseKinematicsActionCfg
 from isaaclab.managers import EventTermCfg as EventTerm
@@ -18,9 +17,8 @@ from isaaclab.sim.spawners.from_files.from_files_cfg import UsdFileCfg
 from isaaclab.utils import configclass
 from isaaclab.utils.assets import ISAAC_NUCLEUS_DIR
 
-from isaaclab_tasks.manager_based.manipulation.stack.stack_env_cfg import mdp
-from isaaclab_tasks.manager_based.manipulation.stack.stack_env_cfg import StackEnvCfg
 from isaaclab_tasks.manager_based.manipulation.stack.mdp import franka_stack_events
+from isaaclab_tasks.manager_based.manipulation.stack.stack_env_cfg import StackEnvCfg, mdp
 
 ##
 # Pre-defined configs
@@ -29,7 +27,7 @@ from isaaclab.markers.config import FRAME_MARKER_CFG  # isort: skip
 from isaaclab_assets.robots.franka import FRANKA_PANDA_HIGH_PD_CFG  # isort: skip
 
 # Default arm + gripper joint pose
-_FRANKA_STACK_IK_REL_JOINT_POS: dict[str, float] = {
+_FRANKA_STACK_IK_REL_INIT_JOINT_POS: dict[str, float] = {
     "panda_joint1": 0.0444,
     "panda_joint2": -0.1894,
     "panda_joint3": -0.1107,
@@ -39,6 +37,7 @@ _FRANKA_STACK_IK_REL_JOINT_POS: dict[str, float] = {
     "panda_joint7": 0.6952,
     "panda_finger_joint.*": 0.0400,
 }
+
 
 @configclass
 class EventCfg:
@@ -64,6 +63,7 @@ class EventCfg:
         },
     )
 
+
 @configclass
 class FrankaCubeStackEnvCfg(StackEnvCfg):
     def __post_init__(self):
@@ -77,7 +77,7 @@ class FrankaCubeStackEnvCfg(StackEnvCfg):
         # We switch here to a stiffer PD controller for IK tracking to be better.
         self.scene.robot = FRANKA_PANDA_HIGH_PD_CFG.replace(
             prim_path="{ENV_REGEX_NS}/Robot",
-            init_state=ArticulationCfg.InitialStateCfg(joint_pos=_FRANKA_STACK_IK_REL_JOINT_POS),
+            init_state=ArticulationCfg.InitialStateCfg(joint_pos=_FRANKA_STACK_IK_REL_INIT_JOINT_POS),
         )
 
         # Add semantics to table
