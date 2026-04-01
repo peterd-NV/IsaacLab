@@ -23,7 +23,7 @@ from isaaclab.utils.assets import ISAACLAB_NUCLEUS_DIR, retrieve_file_path
 _TASK_NAME = "Isaac-NutPour-GR1T2-Pink-IK-Abs-Mimic-v0"
 DATASETS_DOWNLOAD_DIR = tempfile.mkdtemp(suffix=f"_{_TASK_NAME}")
 NUCLEUS_ANNOTATED_DATASET_PATH = os.path.join(
-    ISAACLAB_NUCLEUS_DIR, "Tests", "Mimic", "TODO_FILL_IN_ENV_NAME", "annotated_dataset.hdf5"
+    ISAACLAB_NUCLEUS_DIR, "Mimic", "Tests", "annotated_dataset_gr1_nut_pouring_test.hdf5"
 )
 # TODO: REMOVE LOCAL DATASET PATH
 # _LOCAL_ANNOTATED_DATASET = "/home/peterd/workspaces/IsaacLab/datasets/annotated_dataset_gr1_nut_pouring_test.hdf5"

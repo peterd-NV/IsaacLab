@@ -23,8 +23,9 @@ from isaaclab.utils.assets import ISAACLAB_NUCLEUS_DIR, retrieve_file_path
 _TASK_NAME = "Isaac-PickPlace-GR1T2-Abs-Mimic-v0"
 DATASETS_DOWNLOAD_DIR = tempfile.mkdtemp(suffix=f"_{_TASK_NAME}")
 NUCLEUS_ANNOTATED_DATASET_PATH = os.path.join(
-    ISAACLAB_NUCLEUS_DIR, "Tests", "Mimic", "TODO_FILL_IN_ENV_NAME", "annotated_dataset.hdf5"
+    ISAACLAB_NUCLEUS_DIR, "Mimic", "Tests", "annotated_dataset_gr1_steering_wheel_test.hdf5"
 )
+# TODO: REMOVE LOCAL DATASET PATH
 # _LOCAL_ANNOTATED_DATASET = "/home/peterd/workspaces/IsaacLab/datasets/dataset_annotated_gr1.hdf5"
 
 _SUBPROCESS_TIMEOUT = 1800
@@ -80,7 +81,7 @@ def setup_pickplace_gr1t2_test_environment():
         f"retrieve_file_path returned '{downloaded_dataset_path}' but the file does not exist on disk."
     )
 
-    # To use a local dataset instead of Nucleus, comment out the block above and uncomment:
+    # TODO: REMOVE LOCAL DATASET PATH
     # downloaded_dataset_path = _LOCAL_ANNOTATED_DATASET
     # assert os.path.isfile(downloaded_dataset_path), (
     #     f"Local annotated dataset not found at {downloaded_dataset_path}"
