@@ -25,8 +25,6 @@ DATASETS_DOWNLOAD_DIR = tempfile.mkdtemp(suffix=f"_{_TASK_NAME}")
 NUCLEUS_ANNOTATED_DATASET_PATH = os.path.join(
     ISAACLAB_NUCLEUS_DIR, "Mimic", "Tests", "annotated_dataset_gr1_steering_wheel_test.hdf5"
 )
-# TODO: REMOVE LOCAL DATASET PATH
-# _LOCAL_ANNOTATED_DATASET = "/home/peterd/workspaces/IsaacLab/datasets/dataset_annotated_gr1.hdf5"
 
 _SUBPROCESS_TIMEOUT = 1800
 _SUBPROCESS_GRACE_PERIOD = 15
@@ -80,12 +78,6 @@ def setup_pickplace_gr1t2_test_environment():
     assert os.path.isfile(downloaded_dataset_path), (
         f"retrieve_file_path returned '{downloaded_dataset_path}' but the file does not exist on disk."
     )
-
-    # TODO: REMOVE LOCAL DATASET PATH
-    # downloaded_dataset_path = _LOCAL_ANNOTATED_DATASET
-    # assert os.path.isfile(downloaded_dataset_path), (
-    #     f"Local annotated dataset not found at {downloaded_dataset_path}"
-    # )
 
     pythonunbuffered_env_var_ = os.environ.get("PYTHONUNBUFFERED")
     os.environ["PYTHONUNBUFFERED"] = "1"

@@ -25,7 +25,6 @@ DATASETS_DOWNLOAD_DIR = tempfile.mkdtemp(suffix=f"_{_TASK_NAME}")
 NUCLEUS_ANNOTATED_DATASET_PATH = os.path.join(
     ISAACLAB_NUCLEUS_DIR, "Mimic", "Tests", "annotated_dataset_franka_visuomotor_test.hdf5"
 )
-# _LOCAL_ANNOTATED_DATASET = "/home/peterd/workspaces/IsaacLab/datasets/annotated_dataset_visuomotor.hdf5"
 
 _SUBPROCESS_TIMEOUT = 1800
 _SUBPROCESS_GRACE_PERIOD = 15
@@ -79,12 +78,6 @@ def setup_visuomotor_test_environment():
     assert os.path.isfile(downloaded_dataset_path), (
         f"retrieve_file_path returned '{downloaded_dataset_path}' but the file does not exist on disk."
     )
-
-    # TODO: REMOVE LOCAL DATASET PATH
-    # downloaded_dataset_path = _LOCAL_ANNOTATED_DATASET
-    # assert os.path.isfile(downloaded_dataset_path), (
-    #     f"Local annotated dataset not found at {downloaded_dataset_path}"
-    # )
 
     pythonunbuffered_env_var_ = os.environ.get("PYTHONUNBUFFERED")
     os.environ["PYTHONUNBUFFERED"] = "1"
