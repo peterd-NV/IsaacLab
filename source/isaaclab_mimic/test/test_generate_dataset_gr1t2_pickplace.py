@@ -15,7 +15,7 @@ import sys
 import tempfile
 
 import pytest
-from utils import run_script
+from mimic_test_utils import run_script
 
 from isaaclab.utils.assets import ISAACLAB_NUCLEUS_DIR, retrieve_file_path
 
