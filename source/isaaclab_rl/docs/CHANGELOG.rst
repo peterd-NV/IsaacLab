@@ -7,7 +7,7 @@ Changelog
 Changed
 ^^^^^^^
 
-* Locked h5py dependency to last stableversion 3.15.1 to prevent package import errors on Windows with version 3.16.0.
+* Locked h5py dependency to last stable version 3.15.1 to prevent package import errors on Windows with version 3.16.0.
 
 
 0.5.0 (2026-3-04)
