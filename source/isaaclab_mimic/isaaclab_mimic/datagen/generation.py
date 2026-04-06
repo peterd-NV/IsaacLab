@@ -78,6 +78,7 @@ def env_loop(
     env_action_queue: asyncio.Queue,
     shared_datagen_info_pool: DataGenInfoPool,
     asyncio_event_loop: asyncio.AbstractEventLoop,
+    data_gen_tasks: asyncio.Future | None = None,
 ):
     """Main asyncio loop for the environment.
 
@@ -87,6 +88,8 @@ def env_loop(
         env_action_queue: The asyncio queue to handle actions to for executing actions.
         shared_datagen_info_pool: The shared datagen info pool that stores source demo info.
         asyncio_event_loop: The main asyncio event loop.
+        data_gen_tasks: The gathered async data generation future. When provided, the loop
+            will exit early if all tasks finish unexpectedly (e.g. due to an unhandled exception).
     """
     global num_success, num_failures, num_attempts
     env_id_tensor = torch.tensor([0], dtype=torch.int64, device=env.device)
@@ -97,6 +100,11 @@ def env_loop(
             # check if any environment needs to be reset while waiting for actions
             while env_action_queue.qsize() != env.num_envs:
                 asyncio_event_loop.run_until_complete(asyncio.sleep(0))
+                if data_gen_tasks is not None and data_gen_tasks.done():
+                    exc = data_gen_tasks.exception()
+                    if exc is not None:
+                        raise exc
+                    return
                 while not env_reset_queue.empty():
                     env_id_tensor[0] = env_reset_queue.get_nowait()
                     env.reset(env_ids=env_id_tensor)
