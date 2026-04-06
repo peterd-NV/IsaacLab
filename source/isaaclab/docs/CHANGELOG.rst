@@ -1,6 +1,20 @@
 Changelog
 ---------
 
+4.5.26 (2026-04-06)
+~~~~~~~~~~~~~~~~~~~
+
+Added
+^^^^^
+
+* Added flag to toggle dataset compression in RecorderManager and dataset file handler.
+
+Changed
+^^^^^^^
+
+* Changed RecorderManager to clone value tensors before adding to episode data, removing multiple clones in ``episodes.add()`` and replacing with a single clone.
+
+
 4.5.25 (2026-04-01)
 ~~~~~~~~~~~~~~~~~~~
 

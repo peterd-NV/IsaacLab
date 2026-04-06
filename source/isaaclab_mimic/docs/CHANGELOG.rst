@@ -1,6 +1,20 @@
 Changelog
 ---------
 
+1.2.4 (2026-04-06)
+~~~~~~~~~~~~~~~~~~~
+
+Changed
+^^^^^^^
+
+* Make performance enhancing changes to data generation pipeline (elimate large tensor usage, reduce asyncio overhead and blocking)
+
+Added
+^^^^^
+
+* Added data generation test cases for all tasks (single and multi environment).
+
+
 1.2.3 (2026-03-12)
 ~~~~~~~~~~~~~~~~~~~
 
