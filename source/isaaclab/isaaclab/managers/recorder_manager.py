@@ -55,8 +55,8 @@ class RecorderManagerBaseCfg:
     export_in_close: bool = False
     """Whether to export episodes in the close call."""
 
-    disable_dataset_compression: bool = False
-    """Disable dataset compression."""
+    dataset_compression: bool = True
+    """Enable dataset compression."""
 
 
 class RecorderTerm(ManagerTermBase):
@@ -518,7 +518,7 @@ class RecorderManager(ManagerBase):
                     # Use corresponding demo_id if provided, otherwise None
                     current_demo_id = demo_ids[i] if demo_ids is not None else None
                     target_dataset_file_handler.write_episode(
-                        self._episodes[env_id], current_demo_id, self.cfg.disable_dataset_compression
+                        self._episodes[env_id], current_demo_id, self.cfg.dataset_compression
                     )
                     need_to_flush = True
                 # Update episode count
@@ -573,7 +573,7 @@ class RecorderManager(ManagerBase):
                 "dataset_export_mode",
                 "export_in_record_pre_reset",
                 "export_in_close",
-                "disable_dataset_compression",
+                "dataset_compression",
             ]:
                 continue
             # check if term config is None

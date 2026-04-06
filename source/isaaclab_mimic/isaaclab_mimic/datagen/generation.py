@@ -158,7 +158,7 @@ def setup_env_config(
     device: str,
     generation_num_trials: int | None = None,
     recorder_cfg: RecorderManagerBaseCfg | None = None,
-    disable_dataset_compression: bool = False,
+    dataset_compression: bool = True,
 ) -> tuple[Any, Any]:
     """Configure the environment for data generation.
 
@@ -170,7 +170,7 @@ def setup_env_config(
         device: Device to run on
         generation_num_trials: Optional override for number of trials
         recorder_cfg: Recorder manager configuration
-        disable_dataset_compression: Whether to disable dataset compression
+        dataset_compression: Whether to enable dataset compression
 
     Returns:
         tuple containing:
@@ -207,8 +207,10 @@ def setup_env_config(
     env_cfg.recorders.dataset_export_dir_path = output_dir
     env_cfg.recorders.dataset_filename = output_file_name
 
-    if disable_dataset_compression:
-        env_cfg.recorders.disable_dataset_compression = True
+    if dataset_compression:
+        env_cfg.recorders.dataset_compression = True
+    else:
+        env_cfg.recorders.dataset_compression = False
 
     if env_cfg.datagen_config.generation_keep_failed:
         env_cfg.recorders.dataset_export_mode = DatasetExportMode.EXPORT_SUCCEEDED_FAILED_IN_SEPARATE_FILES

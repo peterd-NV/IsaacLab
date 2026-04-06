@@ -30,18 +30,19 @@ parser.add_argument(
 parser.add_argument(
     "--pause_subtask",
     action="store_true",
-    help="pause after every subtask during generation for debugging - only useful with render flag",
+    help="Pause after every subtask during generation for debugging - only useful with render flag",
 )
 parser.add_argument(
     "--use_skillgen",
     action="store_true",
     default=False,
-    help="use skillgen to generate motion trajectories",
+    help="Use skillgen to generate motion trajectories",
 )
 parser.add_argument(
     "--disable_dataset_compression",
     action="store_true",
-    help="Disable dataset compression",
+    default=False,
+    help="Disables dataset compression",
 )
 
 # append AppLauncher cli args
@@ -94,7 +95,7 @@ def main():
         num_envs=num_envs,
         device=args_cli.device,
         generation_num_trials=args_cli.generation_num_trials,
-        disable_dataset_compression=args_cli.disable_dataset_compression,
+        dataset_compression=not args_cli.disable_dataset_compression,
     )
 
     # Create environment
