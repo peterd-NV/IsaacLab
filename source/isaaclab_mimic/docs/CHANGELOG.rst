@@ -7,7 +7,8 @@ Changelog
 Changed
 ^^^^^^^
 
-* Make performance enhancing changes to data generation pipeline (elimate large tensor usage, reduce asyncio overhead and blocking)
+* Made performance enhancing changes to data generation pipeline (elimate large tensor usage, reduce asyncio overhead and blocking)
+* Locked h5py dependency to last stableversion 3.15.1 to prevent package import errors on Windows with version 3.16.0.
 
 Added
 ^^^^^
