@@ -207,10 +207,7 @@ def setup_env_config(
     env_cfg.recorders.dataset_export_dir_path = output_dir
     env_cfg.recorders.dataset_filename = output_file_name
 
-    if dataset_compression:
-        env_cfg.recorders.dataset_compression = True
-    else:
-        env_cfg.recorders.dataset_compression = False
+    env_cfg.recorders.dataset_compression = dataset_compression
 
     if env_cfg.datagen_config.generation_keep_failed:
         env_cfg.recorders.dataset_export_mode = DatasetExportMode.EXPORT_SUCCEEDED_FAILED_IN_SEPARATE_FILES
