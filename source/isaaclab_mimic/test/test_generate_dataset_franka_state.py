@@ -11,8 +11,6 @@ from isaaclab.app import AppLauncher
 simulation_app = AppLauncher(headless=True).app
 
 import os
-import signal
-import subprocess
 import sys
 import tempfile
 
@@ -20,56 +18,13 @@ import pytest
 
 from isaaclab.utils.assets import ISAACLAB_NUCLEUS_DIR, retrieve_file_path
 
+from utils import run_script
+
 DATASETS_DOWNLOAD_DIR = tempfile.mkdtemp(suffix="_Isaac-Stack-Cube-Franka-IK-Rel-Mimic-v0")
 NUCLEUS_DATASET_PATH = os.path.join(ISAACLAB_NUCLEUS_DIR, "Tests", "Mimic", "dataset.hdf5")
 EXPECTED_SUCCESSFUL_ANNOTATIONS = 10
 
-# Timeout for subprocess execution (seconds).  The annotation / generation
-# scripts run a full simulation loop which can take several minutes.  A second,
-# shorter grace period is given after the timeout to allow cleanup before the
-# process is forcefully killed.
 _SUBPROCESS_TIMEOUT = 600
-_SUBPROCESS_GRACE_PERIOD = 15
-
-
-def _run_script(command: list[str]) -> subprocess.CompletedProcess:
-    """Run a script in a subprocess and return a CompletedProcess.
-
-    The Kit / Omniverse runtime's ``simulation_app.close()`` can hang
-    indefinitely when another ``SimulationApp`` instance is alive in the parent
-    test process (shared GPU / IPC resources).  To avoid blocking the test
-    suite we use ``Popen`` with an explicit timeout:
-
-    1. Wait up to ``_SUBPROCESS_TIMEOUT`` seconds for the process to finish.
-    2. On timeout send ``SIGTERM`` and wait ``_SUBPROCESS_GRACE_PERIOD`` seconds.
-    3. If still alive, ``SIGKILL`` and collect remaining output.
-
-    The captured *stdout* / *stderr* are returned regardless of how the process
-    terminated so that callers can validate the script's printed output.
-    """
-    process = subprocess.Popen(
-        command,
-        stdout=subprocess.PIPE,
-        stderr=subprocess.PIPE,
-        text=True,
-    )
-    try:
-        stdout, stderr = process.communicate(timeout=_SUBPROCESS_TIMEOUT)
-    except subprocess.TimeoutExpired:
-        # Script likely hung during simulation_app.close() – ask nicely first.
-        process.send_signal(signal.SIGTERM)
-        try:
-            stdout, stderr = process.communicate(timeout=_SUBPROCESS_GRACE_PERIOD)
-        except subprocess.TimeoutExpired:
-            process.kill()
-            stdout, stderr = process.communicate()
-
-    return subprocess.CompletedProcess(
-        args=command,
-        returncode=process.returncode,
-        stdout=stdout or "",
-        stderr=stderr or "",
-    )
 
 
 @pytest.fixture
@@ -125,7 +80,7 @@ def setup_test_environment():
     ]
     print(config_command)
 
-    result = _run_script(config_command)
+    result = run_script(config_command, timeout=_SUBPROCESS_TIMEOUT)
 
     print(f"Annotate demos result: {result.returncode}\n")
 
@@ -188,7 +143,7 @@ def _run_generation(workflow_root: str, input_file: str, output_file: str, num_e
         "--headless",
     ]
 
-    result = _run_script(command)
+    result = run_script(command, timeout=_SUBPROCESS_TIMEOUT)
 
     print(f"State-based dataset generation result (num_envs={num_envs}):")
     print(result.stdout)

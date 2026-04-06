@@ -11,8 +11,6 @@ from isaaclab.app import AppLauncher
 simulation_app = AppLauncher(headless=True).app
 
 import os
-import signal
-import subprocess
 import sys
 import tempfile
 
@@ -20,44 +18,13 @@ import pytest
 
 from isaaclab.utils.assets import ISAACLAB_NUCLEUS_DIR, retrieve_file_path
 
+from utils import run_script
+
 _TASK_NAME = "Isaac-NutPour-GR1T2-Pink-IK-Abs-Mimic-v0"
 DATASETS_DOWNLOAD_DIR = tempfile.mkdtemp(suffix=f"_{_TASK_NAME}")
 NUCLEUS_ANNOTATED_DATASET_PATH = os.path.join(
     ISAACLAB_NUCLEUS_DIR, "Mimic", "Tests", "annotated_dataset_gr1_nut_pouring_test.hdf5"
 )
-
-_SUBPROCESS_TIMEOUT = 1800
-_SUBPROCESS_GRACE_PERIOD = 15
-
-
-def _run_script(command: list[str]) -> subprocess.CompletedProcess:
-    """Run a script in a subprocess and return a CompletedProcess.
-
-    Uses ``Popen`` with an explicit timeout so that a hung
-    ``simulation_app.close()`` does not block the test suite indefinitely.
-    """
-    process = subprocess.Popen(
-        command,
-        stdout=subprocess.PIPE,
-        stderr=subprocess.PIPE,
-        text=True,
-    )
-    try:
-        stdout, stderr = process.communicate(timeout=_SUBPROCESS_TIMEOUT)
-    except subprocess.TimeoutExpired:
-        process.send_signal(signal.SIGTERM)
-        try:
-            stdout, stderr = process.communicate(timeout=_SUBPROCESS_GRACE_PERIOD)
-        except subprocess.TimeoutExpired:
-            process.kill()
-            stdout, stderr = process.communicate()
-
-    return subprocess.CompletedProcess(
-        args=command,
-        returncode=process.returncode,
-        stdout=stdout or "",
-        stderr=stderr or "",
-    )
 
 
 @pytest.fixture
@@ -112,7 +79,7 @@ def _run_generation(workflow_root: str, input_file: str, output_file: str, num_e
         "--headless",
     ]
 
-    result = _run_script(command)
+    result = run_script(command)
 
     print(f"NutPour GR1T2 dataset generation result (num_envs={num_envs}):")
     print(result.stdout)
