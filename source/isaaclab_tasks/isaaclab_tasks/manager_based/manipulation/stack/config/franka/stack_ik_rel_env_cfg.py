@@ -38,7 +38,6 @@ class FrankaCubeStackEnvCfg(StackEnvCfg):
 
         # Set Franka as robot with stiffer PD controller for IK tracking
         self.scene.robot = FRANKA_PANDA_HIGH_PD_CFG.replace(prim_path="{ENV_REGEX_NS}/Robot")
-        self.scene.robot.spawn.semantic_tags = [("class", "robot")]
 
         # Add semantics to table
         self.scene.table.spawn.semantic_tags = [("class", "table")]
