@@ -1,6 +1,18 @@
 Changelog
 ---------
 
+1.5.20 (2026-04-08)
+~~~~~~~~~~~~~~~~~~~
+
+Changed
+^^^^^^^
+
+* Simplified inheritance hierarchy for :class:`~isaaclab_tasks.manager_based.manipulation.stack.config.franka.stack_ik_rel_env_cfg.FrankaCubeStackEnvCfg`
+  and :class:`~isaaclab_tasks.manager_based.manipulation.stack.config.franka.stack_ik_rel_visuomotor_env_cfg.FrankaCubeStackVisuomotorEnvCfg`
+  to inherit directly from :class:`~isaaclab_tasks.manager_based.manipulation.stack.stack_env_cfg.StackEnvCfg`,
+  removing the intermediate joint-position environment layer.
+
+
 1.5.19 (2026-04-06)
 ~~~~~~~~~~~~~~~~~~~
 
