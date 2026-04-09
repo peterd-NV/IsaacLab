@@ -168,7 +168,7 @@ def main():
 
     # Get idle action (idle actions are applied to envs without next action)
     if hasattr(env_cfg, "idle_action"):
-        idle_action = env_cfg.idle_action.repeat(num_envs, 1)
+        idle_action = torch.tensor(env_cfg.idle_action, device=env.unwrapped.device).repeat(num_envs, 1)
     else:
         idle_action = torch.zeros(env.action_space.shape)
 
