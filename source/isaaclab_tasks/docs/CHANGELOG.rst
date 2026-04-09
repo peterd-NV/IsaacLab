@@ -1,13 +1,23 @@
 Changelog
 ---------
 
-1.5.19 (2026-04-06)
+1.5.20 (2026-04-06)
 ~~~~~~~~~~~~~~~~~~~
 
 Changed
 ^^^^^^^
 
 * Change Franka visuomotor and GR1T2 nut pouring environments to use TiledCamera.
+
+
+1.5.19 (2026-04-06)
+~~~~~~~~~~~~~~~~~~~
+
+Changed
+^^^^^^^
+
+* Aligned :class:`~isaaclab_tasks.manager_based.manipulation.deploy.reach.config.rizon_4s.ros_inference_env_cfg.Rizon4sReachROSInferenceEnvCfg`
+  with the Flexiv Rizon 4s mount and workspace at NVIDIA Hubble Lab.
 
 
 1.5.18 (2026-04-02)

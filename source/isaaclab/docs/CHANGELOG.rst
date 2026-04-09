@@ -1,7 +1,7 @@
 Changelog
 ---------
 
-4.5.26 (2026-04-06)
+4.5.28 (2026-04-09)
 ~~~~~~~~~~~~~~~~~~~
 
 Added
@@ -13,6 +13,30 @@ Changed
 ^^^^^^^
 
 * Changed RecorderManager to clone value tensors before adding to episode data, removing multiple clones in ``episodes.add()`` and replacing with a single clone.
+
+
+4.5.27 (2026-04-08)
+~~~~~~~~~~~~~~~~~~~
+
+Added
+^^^^^
+
+* Added release version to
+  :class:`~isaaclab.test.benchmark.recorders.VersionInfoRecorder` output.
+
+
+4.5.26 (2026-04-08)
+~~~~~~~~~~~~~~~~~~~
+
+Changed
+^^^^^^^
+
+* Changed ``SummaryMetrics`` backend to
+  dynamically render unknown benchmark phases. Previously only hard-coded phase
+  names (``startup``, ``runtime``, ``train``, ``frametime``) were printed in the
+  summary report; any other phases were silently dropped. Unknown phases now
+  render their ``SingleMeasurement`` and ``StatisticalMeasurement`` entries
+  automatically.
 
 
 4.5.25 (2026-04-01)
