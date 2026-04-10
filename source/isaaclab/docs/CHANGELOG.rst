@@ -1,7 +1,7 @@
 Changelog
 ---------
 
-4.5.28 (2026-04-09)
+4.5.29 (2026-04-10)
 ~~~~~~~~~~~~~~~~~~~
 
 Added
@@ -13,6 +13,17 @@ Changed
 ^^^^^^^
 
 * Changed RecorderManager to clone value tensors before adding to episode data, removing multiple clones in ``episodes.add()`` and replacing with a single clone.
+
+
+4.5.28 (2026-04-10)
+~~~~~~~~~~~~~~~~~~~
+
+Added
+^^^^^
+
+* Added :meth:`~isaaclab.physics.PhysicsManager.wait_for_playing` hook and
+  integrated it into :meth:`~isaaclab.sim.SimulationContext.step` so the
+  training loop blocks while the Kit GUI timeline is paused.
 
 
 4.5.27 (2026-04-08)
