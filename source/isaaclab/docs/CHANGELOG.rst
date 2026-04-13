@@ -1,6 +1,15 @@
 Changelog
 ---------
 
+4.5.30 (2026-04-13)
+~~~~~~~~~~~~~~~~~~~
+
+Added
+^^^^^
+* Added :func:`~isaaclab.utils.warp.math_ops.transform_to_vec_quat` utility for
+  zero-copy splitting of ``wp.transformf`` arrays into ``vec3f`` and ``quatf`` views.
+
+
 4.5.29 (2026-04-10)
 ~~~~~~~~~~~~~~~~~~~
 
