@@ -86,6 +86,9 @@ class FrankaCubeStackEnvCfg(StackEnvCfg):
         # Add semantics to ground
         self.scene.plane.semantic_tags = [("class", "ground")]
 
+        # Add semantics to robot
+        self.scene.robot.spawn.semantic_tags = [("class", "robot")]
+
         # Set actions for the specific robot type (franka)
         self.actions.arm_action = DifferentialInverseKinematicsActionCfg(
             asset_name="robot",

@@ -1,34 +1,105 @@
 .. _teleoperation-imitation-learning:
 
-Teleoperation and Imitation Learning with Isaac Lab Mimic
-=========================================================
+Synthetic Data Generation and Imitation Learning with Isaac Lab Mimic
+=====================================================================
+
+What is Isaac Lab Mimic?
+~~~~~~~~~~~~~~~~~~~~~~~~
+
+.. figure:: ../../_static/mimic/franka_mimic_imitation_learning.jpg
+   :width: 100%
+   :align: center
+   :alt: Franka robot performing a stacking task
+   :figclass: align-center
+
+Isaac Lab Mimic (Mimic) is a trajectory data generation tool that can be used to
+augment human demonstrations by generating new synthetic data. Given a set of human demonstrations,
+Mimic can automatically generate new demonstrations involving the same task but with different spatial configurations.
+The generated data can be used to train imitation learning policies that are more robust to spatial variations
+even if just a handful of manual demonstrations are available.
+
+Mimic works by taking a set of human demonstrations and splitting each demonstration into a sequence of subtasks.
+Subtasks are defined based on reference objects that dictate the motion of the robot's end-effectors (eefs). Each subtask
+is a contiguous segment of the demonstration where the eef's motion is dictated by a single reference object. A new subtask begins
+when the reference object changes. Annotations mark points in the demonstration where a subtask is completed.
+
+During data generation, Mimic takes the human demonstration subtask segments and applies rigid body transformations to the robot's actions
+to transform them into new demonstrations involving the same task but with different spatial configurations.
+The new demonstrations are evaluated to determine if they are successful, and if so, are added to the output dataset.
+
+Mimic is compatible with a variety of embodiments including single-eef (e.g. manipulator robots) and multi-eef (e.g. humanoid robots).
+The use of rigid body transformations requires that the embodiment's action space is defined in **task space**. If
+the embodiment's action is in joint space, then the action must be converted to task space using forward kinematics.
+
+In the following sections, we will show how to collect a small batch of human demonstrations for a stacking task
+with the Franka robot, increase the size of the dataset by generating new synthetic data using Isaac Lab Mimic, and
+lastly train a policy to perform the stacking task.
+
+
+
+.. _teleop-imitation-step-1-human-data-collection:
+
+Step 1: Human Data Collection
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+.. note::
+   You may skip this step and proceed directly to :ref:`Step 2: Synthetic Data Generation using Isaac Lab Mimic <teleop-imitation-step-2-synthetic-data>`
+   if you do not wish to collect your own demonstrations.
+
 
 
 Teleoperation
-~~~~~~~~~~~~~
+^^^^^^^^^^^^^
 
-We provide interfaces for providing commands in SE(2) and SE(3) space
-for robot control. In case of SE(2) teleoperation, the returned command
-is the linear x-y velocity and yaw rate, while in SE(3), the returned
-command is a 6-D vector representing the change in pose.
+Isaac Lab supports teleoperation of robots through a variety of input devices including keyboard, SpaceMouse, and XR headsets.
 
-.. note::
-
-   Presently, Isaac Lab Mimic is only supported in Linux.
-
-To play inverse kinematics (IK) control with a keyboard device:
+Run the following command to spin up the environment and teleoperate the robot using the keyboard. Familiarize yourself
+with the controls and perform the stacking task. The order of the stacked cubes should be blue (bottom), red (middle), green (top).
+Once you feel sufficiently comfortable with the controls, you may shutdown
+the environment by quitting the script with Ctrl+C.
 
 .. code:: bash
 
    ./isaaclab.sh -p scripts/environments/teleoperation/teleop_se3_agent.py --task Isaac-Stack-Cube-Franka-IK-Rel-v0 --num_envs 1 --teleop_device keyboard
 
-For smoother operation and off-axis operation, we recommend using a SpaceMouse as the input device. Providing smoother demonstrations will make it easier for the policy to clone the behavior. To use a SpaceMouse, simply change the teleop device accordingly:
+The script will print a helper message with key bindings. For keyboard,
+the key bindings are:
+
+.. code:: text
+
+   Keyboard Controller for SE(3): Se3Keyboard
+      Reset all commands: R
+      Toggle gripper (open/close): K
+      Move arm along x-axis: W/S
+      Move arm along y-axis: A/D
+      Move arm along z-axis: Q/E
+      Rotate arm along x-axis: Z/X
+      Rotate arm along y-axis: T/G
+      Rotate arm along z-axis: C/V
+
+For smoother and simultaneous multi-axis operation, we recommend using a SpaceMouse as the input device.
+Providing smoother demonstrations will make it easier for the policy to clone the behavior.
+Isaac Lab supports the 3Dconnexion `SpaceMouse Compact <https://3dconnexion.com/us/product/spacemouse-compact/>`__
+and `SpaceMouse Wireless <https://3dconnexion.com/us/product/spacemouse-wireless/>`__.
+To use a SpaceMouse, simply change ``--teleop_device`` accordingly:
 
 .. code:: bash
 
    ./isaaclab.sh -p scripts/environments/teleoperation/teleop_se3_agent.py --task Isaac-Stack-Cube-Franka-IK-Rel-v0 --num_envs 1 --teleop_device spacemouse
 
-.. note::
+The script will print a helper message with key bindings. For SpaceMouse,
+the key bindings are:
+
+.. code:: text
+
+   SpaceMouse Controller for SE(3): Se3SpaceMouse
+      Reset all commands: Right click
+      Toggle gripper (open/close): Click the left button on the SpaceMouse
+      Move arm along x/y-axis: Tilt the SpaceMouse
+      Move arm along z-axis: Push or pull the SpaceMouse
+      Rotate arm: Twist the SpaceMouse
+
+.. tip::
 
    If the SpaceMouse is not detected, you may need to grant additional user permissions by running ``sudo chmod 666 /dev/hidraw<#>`` where ``<#>`` corresponds to the device index
    of the connected SpaceMouse.
@@ -50,115 +121,54 @@ For smoother operation and off-axis operation, we recommend using a SpaceMouse a
    Isaac Lab is only compatible with the SpaceMouse Wireless and SpaceMouse Compact models from 3Dconnexion.
 
 
-For tasks that benefit from the use of an extended reality (XR) device with hand tracking, Isaac Lab supports using `Isaac Teleop <https://github.com/NVIDIA/IsaacTeleop>`_ with NVIDIA CloudXR to immersively stream the scene to compatible XR devices for teleoperation. Note that when using hand tracking we recommend using the absolute variant of the task (``Isaac-Stack-Cube-Franka-IK-Abs-v0``):
+
+(Optional) Teleoperation with XR Headsets
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+For tasks that benefit from the use of an extended reality (XR) device with hand tracking,
+Isaac Lab supports using `Isaac Teleop <https://github.com/NVIDIA/IsaacTeleop>`_ with NVIDIA CloudXR 
+to immersively stream the scene to compatible XR devices for teleoperation. 
+
+Follow the steps in :ref:`cloudxr-teleoperation` to learn how to install Isaac Teleop and set up CloudXR for
+teleoperation. Once you have set it up, you can launch the cube stacking environment with the follow command to try it out
+with an XR headset. Note that when using hand tracking, we recommend using the absolute action space 
+variant of the task (``Isaac-Stack-Cube-Franka-IK-Abs-v0``):
 
 .. code:: bash
 
    ./isaaclab.sh -p scripts/environments/teleoperation/teleop_se3_agent.py --task Isaac-Stack-Cube-Franka-IK-Abs-v0 --visualizer kit --xr
 
-.. note::
+.. tip::
 
-   See :ref:`cloudxr-teleoperation` to learn how to install Isaac Teleop and set up CloudXR for
-   teleoperation. For architecture details, retargeting pipelines, and control scheme
-   recommendations, see :ref:`isaac-teleop-feature`.
-
-
-The script prints the teleoperation events configured. For keyboard,
-these are as follows:
-
-.. code:: text
-
-   Keyboard Controller for SE(3): Se3Keyboard
-      Reset all commands: R
-      Toggle gripper (open/close): K
-      Move arm along x-axis: W/S
-      Move arm along y-axis: A/D
-      Move arm along z-axis: Q/E
-      Rotate arm along x-axis: Z/X
-      Rotate arm along y-axis: T/G
-      Rotate arm along z-axis: C/V
-
-For SpaceMouse, these are as follows:
-
-.. code:: text
-
-   SpaceMouse Controller for SE(3): Se3SpaceMouse
-      Reset all commands: Right click
-      Toggle gripper (open/close): Click the left button on the SpaceMouse
-      Move arm along x/y-axis: Tilt the SpaceMouse
-      Move arm along z-axis: Push or pull the SpaceMouse
-      Rotate arm: Twist the SpaceMouse
-
-The next section describes how teleoperation devices can be used for data collection for imitation learning.
+   For more information on teleoperation devices in Isaac Lab, see :ref:`isaac-teleop-feature` for a comprehensive 
+   overview of the teleop framework. See :ref:`isaac-teleop-supported-devices` for a list of supported XR devices
+   and :ref:`isaac-teleop-new-device` for information on adding new devices.
 
 
-Imitation Learning with Isaac Lab Mimic
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-.. figure:: ../../_static/mimic/franka_mimic_imitation_learning.jpg
-   :width: 100%
-   :align: center
-   :alt: Franka robot performing a stacking task
-   :figclass: align-center
+Collect a Dataset of Human Demonstrations
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-What is Isaac Lab Mimic?
-^^^^^^^^^^^^^^^^^^^^^^^^
-
-Isaac Lab Mimic (Mimic) is a trajectory data generation tool that can be used to
-augment human demonstrations by generating new synthetic data. Given a set of human demonstrations,
-Mimic can automatically generate new demonstrations involving the same task but with different spatial configurations.
-The generated data can be used to train imitation learning policies that are more robust to spatial variations
-even if just a handful of manual demonstrations are available.
-
-Mimic works by taking a set of human demonstrations and splitting each demonstration into a sequence of subtasks.
-Subtasks are defined based on reference objects that dictate the motion of the robot's end-effectors (eefs). Each subtask
-is a contiguous segment of the demonstration where the eef's motion is dictated by a single reference object. A new subtask begins
-when the reference object changes. Annotations mark points in the demonstration where a subtask is completed.
-
-During data generation, Mimic takes the human demonstration subtask segments and applies rigid body transformations to the robot's actions
-to transform them into new demonstrations involving the same task but with different spatial configurations.
-The new demonstrations are evaluated to determine if they are successful, and if so, are added to the output dataset.
-
-Mimic is compatible with a variety of embodiments including single-eef (e.g. manipulator robots) and multi-eef (e.g. humanoid robots).
-The use of rigid body transformations requires that the embodiment's action space is defined in **task space**. If
-the embodiment's action is in joint space, then the action must be converted to task space using forward kinematics.
-
-In the following section, we will show how to collect a small batch of human demonstrations for a stacking task
-with the Franka robot and then increase the size of the dataset by generating new synthetic data using Isaac Lab Mimic.
-
-
-Pre-recorded demonstrations
-^^^^^^^^^^^^^^^^^^^^^^^^^^^
-
-We provide a pre-recorded ``dataset.hdf5`` containing 10 human demonstrations for ``Isaac-Stack-Cube-Franka-IK-Rel-v0``
-here: `[Franka Dataset] <https://omniverse-content-staging.s3-us-west-2.amazonaws.com/Assets/Isaac/6.0/Isaac/IsaacLab/Mimic/franka_stack_datasets/dataset.hdf5>`__.
-This dataset may be downloaded and used in the remaining tutorial steps if you do not wish to collect your own demonstrations.
-
-If using the pre-recorded dataset, skip the next section and proceed directly to the :ref:`Generating additional demonstrations <generating-additional-demonstrations>` section.
-
-.. note::
-   Use of the pre-recorded dataset is optional.
-
-
-Collecting demonstrations
-^^^^^^^^^^^^^^^^^^^^^^^^^
-
-To collect demonstrations with teleoperation for the environment ``Isaac-Stack-Cube-Franka-IK-Rel-v0``, use the following commands:
+Make a new folder in the ``IsaacLab`` root directory to store datasets:
 
 .. code:: bash
 
-   #Create folder for datasets
    mkdir -p datasets
 
-   # Collect data with a selected teleoperation device. Replace <teleop_device> with your preferred input device.
-   # Recommended options: spacemouse, keyboard
-   ./isaaclab.sh -p scripts/tools/record_demos.py --task Isaac-Stack-Cube-Franka-IK-Rel-v0 --visualizer kit --teleop_device <teleop_device> --dataset_file ./datasets/dataset.hdf5 --num_demos 10
+Change ``<teleop_device>`` to the teleoperation device you want to use (e.g. ``spacemouse``, ``keyboard``) and 
+run the record demos script to collect a set of 10 human demonstrations for the cube stacking task.
 
-.. note::
+.. code:: bash
 
+   ./isaaclab.sh -p scripts/tools/record_demos.py \
+   --task Isaac-Stack-Cube-Franka-IK-Rel-v0 \
+   --visualizer kit \
+   --dataset_file ./datasets/dataset.hdf5 \
+   --num_demos 10 \
+   --teleop_device <teleop_device>
+
+.. important::
    The order of the stacked cubes should be blue (bottom), red (middle), green (top).
-
-Collect 10 successful demonstrations before proceeding with the next step.
 
 Here are some tips to perform demonstrations that lead to successful policy training:
 
@@ -169,11 +179,31 @@ Here are some tips to perform demonstrations that lead to successful policy trai
 If a mistake is made while performing a demonstration, press the ``R`` key (if using a keyboard) or the
 right button (if using a SpaceMouse) to discard the current demonstration and reset to a new starting position.
 
+Collect 10 successful demonstrations before proceeding with the next step.
 
-.. _generating-additional-demonstrations:
 
-Generating additional demonstrations with Isaac Lab Mimic
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+.. _teleop-imitation-step-2-synthetic-data:
+
+Step 2: Synthetic Data Generation using Isaac Lab Mimic
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+(Optional) Download Pre-recorded Human Demonstrations
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+We provide a pre-recorded HDF5 dataset containing 10 human demonstrations for the cube stacking task
+here: `[Cube Stacking Human Dataset] <https://omniverse-content-staging.s3-us-west-2.amazonaws.com/Assets/Isaac/6.0/Isaac/IsaacLab/Mimic/franka_stack_datasets/dataset.hdf5>`__.
+If you skipped :ref:`Step 1: Human Data Collection <teleop-imitation-step-1-human-data-collection>`, you can download this dataset and use it in the remaining tutorial steps.
+
+Place the dataset in the ``IsaacLab/datasets`` folder. You may need to create the folder if you skipped Step 1 and 
+have not created it yet. 
+
+
+
+.. _generate-additional-demonstrations:
+
+Generate Additional Synthetic Demonstrations
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 In the following example, we will show how to use Isaac Lab Mimic to generate additional demonstrations that can be used to train either a state-based policy
 (using the ``Isaac-Stack-Cube-Franka-IK-Rel-Mimic-v0`` environment) or visuomotor policy (using the ``Isaac-Stack-Cube-Franka-IK-Rel-Visuomotor-Mimic-v0`` environment)
@@ -259,7 +289,7 @@ Next, use Isaac Lab Mimic to generate some additional demonstrations:
 
    Parallel data generation for the Franka robot stacking task.
 
-.. note::
+.. tip::
 
    The output_file of the ``annotate_demos.py`` script is the input_file to the ``generate_dataset.py`` script
 
@@ -275,7 +305,7 @@ Inspect the output of generated data (filename: ``generated_dataset_small.hdf5``
 
          ./isaaclab.sh -p scripts/imitation_learning/isaaclab_mimic/generate_dataset.py \
          --headless \
-         --num_envs 10 \
+         --num_envs 1000 \
          --generation_num_trials 1000 \
          --input_file ./datasets/annotated_dataset.hdf5 \
          --output_file ./datasets/generated_dataset.hdf5
@@ -286,10 +316,9 @@ Inspect the output of generated data (filename: ``generated_dataset_small.hdf5``
       .. code:: bash
 
          ./isaaclab.sh -p scripts/imitation_learning/isaaclab_mimic/generate_dataset.py \
-         --visualizer kit \
          --enable_cameras \
          --headless \
-         --num_envs 10 \
+         --num_envs 300 \
          --generation_num_trials 1000 \
          --input_file ./datasets/annotated_dataset.hdf5 \
          --output_file ./datasets/generated_dataset.hdf5
@@ -297,14 +326,27 @@ Inspect the output of generated data (filename: ``generated_dataset_small.hdf5``
 
 The number of demonstrations ``--generation_num_trials`` can be changed. 1000 demonstrations have been shown to provide good training results for this task.
 
-The number of environments in the ``--num_envs`` parameter can be adjusted to speed up data generation.
-The suggested number of 10 can be executed on a moderate laptop GPU.
-On a more powerful desktop machine, use a larger number of environments for a significant speedup of this step.
+The number of environments in the ``--num_envs`` parameter can be adjusted to speed up or slow down data generation.
+The suggested numbers assume an RTX 6000 GPU.
+You may need to adjust the number of environments to fit your GPU memory.
 
-Robomimic setup
-^^^^^^^^^^^^^^^
+.. note::
 
-Next, we will train a Behavior Cloning (BC) agent implemented in `Robomimic <https://robomimic.github.io/>`__ to demonstrate a policy.
+   **Expected Success Rate and Data Generation Times for Franka Cube Stack Task**
+
+   * Data generation success rate: ~40% (for both state + visuomotor)
+   * Data generation time: ~15 mins for state, ~1 hour for visuomotor (varies based on num envs the user runs)
+
+
+
+Step 3: Policy Training
+~~~~~~~~~~~~~~~~~~~~~~~
+
+Install Robomimic
+^^^^^^^^^^^^^^^^^
+
+In this step, we will train a Behavior Cloning (BC) agent using `Robomimic <https://robomimic.github.io/>`__ 
+to demonstrate a policy for the cube stacking task using the synthetic data generated in the previous step.
 
 To install the robomimic framework, use the following command:
 
@@ -315,10 +357,12 @@ To install the robomimic framework, use the following command:
    # install python module (for robomimic)
    ./isaaclab.sh -i robomimic
 
-Training an agent
-^^^^^^^^^^^^^^^^^
 
-Using the Mimic generated data we can now train a state-based BC agent for ``Isaac-Stack-Cube-Franka-IK-Rel-v0``, or a visuomotor BC agent for ``Isaac-Stack-Cube-Franka-IK-Rel-Visuomotor-v0``:
+
+Train an Agent
+^^^^^^^^^^^^^^
+
+Using the Isaac Lab Mimic generated data we can now train a state-based BC agent for ``Isaac-Stack-Cube-Franka-IK-Rel-v0``, or a visuomotor BC agent for ``Isaac-Stack-Cube-Franka-IK-Rel-Visuomotor-v0``:
 
 .. tab-set::
    :sync-group: policy_type
@@ -343,11 +387,13 @@ Using the Mimic generated data we can now train a state-based BC agent for ``Isa
          --algo bc \
          --dataset ./datasets/generated_dataset.hdf5
 
-.. note::
-   By default the trained models and logs will be saved to ``IssacLab/logs/robomimic``.
+.. tip::
+   By default, the trained models and logs are saved to ``IssacLab/logs/robomimic``.
 
-Visualizing results
-^^^^^^^^^^^^^^^^^^^
+
+
+Visualize the Results
+^^^^^^^^^^^^^^^^^^^^^
 
 .. tip::
 
@@ -386,15 +432,20 @@ Run a the trained policy to visualize the results:
          --num_rollouts 50 \
          --checkpoint /PATH/TO/desired_model_checkpoint.pth
 
+.. figure:: https://download.isaacsim.omniverse.nvidia.com/isaaclab/images/franka_cube_stack_robomimic_mimic_bcrnn.gif
+   :width: 100%
+   :align: center
+   :alt: Robomimic BCRNN policy performing the cube stacking task
+   :figclass: align-center
+
 .. note::
 
-   **Expected Success Rates and Timings for Franka Cube Stack Task**
+   **Expected Policy Training Time and Success Rate for Franka Cube Stack Task**
 
-   * Data generation success rate: ~40% (for both state + visuomotor)
-   * Data generation time: ~30 mins for state, ~4 hours for visuomotor (varies based on num envs the user runs)
    * BC RNN training time: 1000 epochs + ~30 mins (for state), 600 epochs + ~6 hours (for visuomotor)
    * BC RNN policy success rate: ~40-60% (for both state + visuomotor)
    * **Recommendation:** Evaluate checkpoints from various epochs throughout training to identify the best-performing model
+
 
 
 Humanoid Examples
@@ -403,46 +454,6 @@ Humanoid Examples
 For examples of data generation and policy training with humanoid robots (GR-1, G1),
 see the page: :ref:`Examples: Data Generation and Imitation Learning for Humanoids <data-generation-imitation-learning-humanoids>`.
 
-
-.. _common-pitfalls-generating-data:
-
-Common Pitfalls when Generating Data
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-
-**Demonstrations are too long:**
-
-* Longer time horizon is harder to learn for a policy
-* Start close to the first object and minimize motions
-
-**Demonstrations are not smooth:**
-
-* Irregular motion is hard for policy to decipher
-* Better teleop devices result in better data (i.e. SpaceMouse is better than Keyboard)
-
-**Pauses in demonstrations:**
-
-* Pauses are difficult to learn
-* Keep the human motions smooth and fluid
-
-**Excessive number of subtasks:**
-
-* Minimize the number of defined subtasks for completing a given task
-* Less subtacks results in less stitching of trajectories, yielding higher data generation success rate
-
-**Lack of action noise:**
-
-* Action noise makes policies more robust
-
-**Recording cropped too tight:**
-
-* If recording stops on the frame the success term triggers, it may not re-trigger during replay
-* Allow for some buffer at the end of recording
-
-**Non-deterministic replay:**
-
-* Physics in IsaacLab are not deterministically reproducible when using ``env.reset`` so demonstrations may fail on replay
-* Collect more human demos than needed, use the ones that succeed during annotation
-* All data in Isaac Lab Mimic generated HDF5 file represent a successful demo and can be used for training (even if non-determinism causes failure when replayed)
 
 
 Creating Your Own Isaac Lab Mimic Compatible Environments
@@ -564,6 +575,49 @@ smooth and natural.
 |0_interp_steps| |5_interp_steps| |20_interp_steps|
 
 .. centered:: Left: 0 steps. Middle: 5 steps. Right: 20 steps.
+
+
+
+.. _common-pitfalls-generating-data:
+
+Common Pitfalls when Generating Data
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+**Demonstrations are too long:**
+
+* Longer time horizon is harder to learn for a policy
+* Start close to the first object and minimize motions
+
+**Demonstrations are not smooth:**
+
+* Irregular motion is hard for policy to decipher
+* Better teleop devices result in better data (i.e. SpaceMouse is better than Keyboard)
+
+**Pauses in demonstrations:**
+
+* Pauses are difficult to learn
+* Keep the human motions smooth and fluid
+
+**Excessive number of subtasks:**
+
+* Minimize the number of defined subtasks for completing a given task
+* Less subtacks results in less stitching of trajectories, yielding higher data generation success rate
+
+**Lack of action noise:**
+
+* Action noise makes policies more robust
+
+**Recording cropped too tight:**
+
+* If recording stops on the frame the success term triggers, it may not re-trigger during replay
+* Allow for some buffer at the end of recording
+
+**Non-deterministic replay:**
+
+* Physics in IsaacLab are not deterministically reproducible when using ``env.reset`` so demonstrations may fail on replay
+* Collect more human demos than needed, use the ones that succeed during annotation
+* All data in Isaac Lab Mimic generated HDF5 file represent a successful demo and can be used for training (even if non-determinism causes failure when replayed)
+
 
 
 .. _glossary-mimic-terminology:
