@@ -7,8 +7,6 @@ import logging
 import tempfile
 from dataclasses import MISSING
 
-import torch
-
 try:
     from isaaclab_teleop import XrCfg
 
