@@ -327,15 +327,17 @@ Inspect the output of generated data (filename: ``generated_dataset_small.hdf5``
 The number of demonstrations ``--generation_num_trials`` can be changed. 1000 demonstrations have been shown to provide good training results for this task.
 
 The number of environments in the ``--num_envs`` parameter can be adjusted to speed up or slow down data generation.
-The suggested numbers assume an RTX 6000 GPU.
+The suggested values assume an RTX PRO 6000 Blackwell GPU.
 You may need to adjust the number of environments to fit your GPU memory.
 
 .. note::
 
-   **Expected Success Rate and Data Generation Times for Franka Cube Stack Task**
+   **Expected Data Generation Success Rate and Time**
 
-   * Data generation success rate: ~40% (for both state + visuomotor)
-   * Data generation time: ~15 mins for state, ~1 hour for visuomotor (varies based on num envs the user runs)
+   * Data generation success rate: ~40% for both state and visuomotor
+   * Data generation time: ~15 mins for state, ~1 hour for visuomotor
+
+   *Numbers are based on using an RTX PRO 6000 Blackwell GPU with the provided commands.*
 
 
 
@@ -345,10 +347,10 @@ Step 3: Policy Training
 Install Robomimic
 ^^^^^^^^^^^^^^^^^
 
-In this step, we will train a Behavior Cloning (BC) agent using `Robomimic <https://robomimic.github.io/>`__ 
+In this step, we will train a Behavior Cloning (BC) RNN agent using `Robomimic <https://robomimic.github.io/>`__ 
 to demonstrate a policy for the cube stacking task using the synthetic data generated in the previous step.
 
-To install the robomimic framework, use the following command:
+Install the Robomimic framework using the following command:
 
 .. code:: bash
 
@@ -362,7 +364,9 @@ To install the robomimic framework, use the following command:
 Train an Agent
 ^^^^^^^^^^^^^^
 
-Using the Isaac Lab Mimic generated data we can now train a state-based BC agent for ``Isaac-Stack-Cube-Franka-IK-Rel-v0``, or a visuomotor BC agent for ``Isaac-Stack-Cube-Franka-IK-Rel-Visuomotor-v0``:
+Using the Isaac Lab Mimic generated data we can now train a state-based BC RNN agent for 
+``Isaac-Stack-Cube-Franka-IK-Rel-v0``, or a visuomotor BC RNN agent for 
+``Isaac-Stack-Cube-Franka-IK-Rel-Visuomotor-v0``:
 
 .. tab-set::
    :sync-group: policy_type
@@ -387,24 +391,15 @@ Using the Isaac Lab Mimic generated data we can now train a state-based BC agent
          --algo bc \
          --dataset ./datasets/generated_dataset.hdf5
 
-.. tip::
-   By default, the trained models and logs are saved to ``IssacLab/logs/robomimic``.
+.. important::
+   The trained models and logs are saved to ``IsaacLab/logs/robomimic``.
 
 
 
 Visualize the Results
 ^^^^^^^^^^^^^^^^^^^^^
 
-.. tip::
-
-   **Important: Testing Multiple Checkpoint Epochs**
-
-   When evaluating policy performance, it is common for different training epochs to yield different results.
-   If you don't see the expected performance, **always test policies from various epochs** (not just the final checkpoint)
-   to find the best-performing model. Model performance can vary substantially across training, and the final epoch
-   is not always optimal.
-
-Run a the trained policy to visualize the results:
+Run the trained policy to visualize the results:
 
 .. tab-set::
    :sync-group: policy_type
@@ -432,21 +427,33 @@ Run a the trained policy to visualize the results:
          --num_rollouts 50 \
          --checkpoint /PATH/TO/desired_model_checkpoint.pth
 
+When evaluating policy performance, it is common for different training epochs to yield different results.
+If you don't see the expected performance, **always test policies from various epochs** (not just the final checkpoint)
+to find the best-performing model. Model performance can vary substantially across training, and the final epoch
+is not always optimal.
+
 .. figure:: https://download.isaacsim.omniverse.nvidia.com/isaaclab/images/franka_cube_stack_robomimic_mimic_bcrnn.gif
    :width: 100%
    :align: center
    :alt: Robomimic BCRNN policy performing the cube stacking task
    :figclass: align-center
-
-.. centered:: Robomimic BC RNN policy performing the cube stacking task
+   
+   Robomimic BC RNN policy performing the cube stacking task. 
 
 .. note::
 
-   **Expected Policy Training Time and Success Rate for Franka Cube Stack Task**
+   **Expected Policy Training Time and Success Rate**
 
-   * BC RNN training time: 1000 epochs + ~30 mins (for state), 600 epochs + ~6 hours (for visuomotor)
-   * BC RNN policy success rate: ~40-60% (for both state + visuomotor)
+   * BC RNN training time: ~30 mins for state (1000 epochs), ~6 hours for visuomotor (600 epochs)
+   * BC RNN policy success rate: ~40-60% for both state and visuomotor
    * **Recommendation:** Evaluate checkpoints from various epochs throughout training to identify the best-performing model
+
+   *Numbers are based on using an RTX PRO 6000 Blackwell GPU with the provided commands.*
+
+
+**You have now completed the introductory tutorial on synthetic data generation and policy training with Isaac Lab Mimic.
+In the sections below, you can explore examples with other robot embodiments (e.g. humanoids) and how to create your 
+own Isaac Lab Mimic compatible environments.**
 
 
 
