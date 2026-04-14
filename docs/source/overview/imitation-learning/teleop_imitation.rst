@@ -438,6 +438,8 @@ Run a the trained policy to visualize the results:
    :alt: Robomimic BCRNN policy performing the cube stacking task
    :figclass: align-center
 
+.. centered:: Robomimic BC RNN policy performing the cube stacking task
+
 .. note::
 
    **Expected Policy Training Time and Success Rate for Franka Cube Stack Task**
