@@ -81,6 +81,14 @@ directions.
    --num_envs 1 \
    --task Isaac-Stack-Cube-Franka-IK-Rel-v0
 
+.. figure:: ../../_static/mimic/franka_cube_stacking_env.jpg
+   :width: 100%
+   :align: center
+   :alt: Franka cube stacking environment
+   :figclass: align-center
+
+   Franka cube stacking environment
+
 
 
 Teleoperation
@@ -310,7 +318,7 @@ Next, use Isaac Lab Mimic to generate some additional demonstrations:
 
          ./isaaclab.sh -p scripts/imitation_learning/isaaclab_mimic/generate_dataset.py \
          --viz kit \
-         --num_envs 10 \
+         --num_envs 20 \
          --generation_num_trials 10 \
          --input_file ./datasets/annotated_dataset.hdf5 \
          --output_file ./datasets/generated_dataset_small.hdf5
@@ -323,7 +331,7 @@ Next, use Isaac Lab Mimic to generate some additional demonstrations:
          ./isaaclab.sh -p scripts/imitation_learning/isaaclab_mimic/generate_dataset.py \
          --viz kit \
          --enable_cameras \
-         --num_envs 10 \
+         --num_envs 20 \
          --generation_num_trials 10 \
          --input_file ./datasets/annotated_dataset.hdf5 \
          --output_file ./datasets/generated_dataset_small.hdf5
@@ -334,7 +342,7 @@ Next, use Isaac Lab Mimic to generate some additional demonstrations:
    :alt: Franka robot performing a stacking task
    :figclass: align-center
 
-   Parallel data generation for the Franka robot stacking task.
+   Parallel data generation for the Franka robot stacking task
 
 .. tip::
 
@@ -485,7 +493,7 @@ is not always optimal.
    :alt: Robomimic BCRNN policy performing the cube stacking task
    :figclass: align-center
 
-   Robomimic BC RNN policy performing the cube stacking task.
+   Robomimic BC RNN policy performing the cube stacking task
 
 .. note::
 
