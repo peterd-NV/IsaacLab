@@ -48,6 +48,41 @@ Step 1: Human Data Collection
 
 
 
+Environment Introduction
+^^^^^^^^^^^^^^^^^^^^^^^^
+
+The environment we will be using in this tutorial is ``Isaac-Stack-Cube-Franka-IK-Rel-v0`` and its variations.
+This environment contains a Franka robot attached to a table with three cubes.
+The task is to stack the cubes in the following order: blue (bottom), red (middle), green (top). As you proceed through
+the rest of this tutorial, you will encounter variations of this environment with different observation spaces 
+(e.g. state-based, visuomotor, etc.).
+
+Run the following command to spin up and visualize the environment using the ``zero_agent.py``
+script provided by Isaac Lab. This script create and step through the environment in a loop with zero tensor actions.
+You will see the robot remain stationary while the environment is running. Use the scroll wheel to zoom in and out of the scene.
+Press and hold the alt key while clicking and dragging to pan around the scene.
+
+.. code:: bash
+
+   ./isaaclab.sh -p scripts/environments/zero_agent.py \
+   --viz kit \
+   --num_envs 1 \
+   --task Isaac-Stack-Cube-Franka-IK-Rel-v0
+   
+
+Next, use the ``random_agent.py`` script to spin up the environment and perform random actions. The script will create
+and step through the environment in a loop with random tensor actions. You will see the robot move in random
+directions.
+
+.. code:: bash
+
+   ./isaaclab.sh -p scripts/environments/random_agent.py \
+   --viz kit \
+   --num_envs 1 \
+   --task Isaac-Stack-Cube-Franka-IK-Rel-v0
+
+
+
 Teleoperation
 ^^^^^^^^^^^^^
 
@@ -60,7 +95,12 @@ the environment by quitting the script with Ctrl+C.
 
 .. code:: bash
 
-   ./isaaclab.sh -p scripts/environments/teleoperation/teleop_se3_agent.py --task Isaac-Stack-Cube-Franka-IK-Rel-v0 --num_envs 1 --teleop_device keyboard
+   ./isaaclab.sh -p scripts/environments/teleoperation/teleop_se3_agent.py \
+   --viz kit \
+   --num_envs 1 \
+   --task Isaac-Stack-Cube-Franka-IK-Rel-v0 \
+   --teleop_device keyboard
+   
 
 The script will print a helper message with key bindings. For keyboard,
 the key bindings are:
@@ -85,7 +125,11 @@ To use a SpaceMouse, simply change ``--teleop_device`` accordingly:
 
 .. code:: bash
 
-   ./isaaclab.sh -p scripts/environments/teleoperation/teleop_se3_agent.py --task Isaac-Stack-Cube-Franka-IK-Rel-v0 --num_envs 1 --teleop_device spacemouse
+   ./isaaclab.sh -p scripts/environments/teleoperation/teleop_se3_agent.py \
+   --viz kit \
+   --num_envs 1 \
+   --task Isaac-Stack-Cube-Franka-IK-Rel-v0 \
+   --teleop_device spacemouse
 
 The script will print a helper message with key bindings. For SpaceMouse,
 the key bindings are:
@@ -136,7 +180,10 @@ variant of the task (``Isaac-Stack-Cube-Franka-IK-Abs-v0``):
 
 .. code:: bash
 
-   ./isaaclab.sh -p scripts/environments/teleoperation/teleop_se3_agent.py --task Isaac-Stack-Cube-Franka-IK-Abs-v0 --visualizer kit --xr
+   ./isaaclab.sh -p scripts/environments/teleoperation/teleop_se3_agent.py \
+   --viz kit \
+   --task Isaac-Stack-Cube-Franka-IK-Abs-v0 \
+   --xr
 
 .. tip::
 
@@ -162,7 +209,7 @@ run the record demos script to collect a set of 10 human demonstrations for the 
 
    ./isaaclab.sh -p scripts/tools/record_demos.py \
    --task Isaac-Stack-Cube-Franka-IK-Rel-v0 \
-   --visualizer kit \
+   --viz kit \
    --dataset_file ./datasets/dataset.hdf5 \
    --num_demos 10 \
    --teleop_device <teleop_device>
@@ -170,16 +217,16 @@ run the record demos script to collect a set of 10 human demonstrations for the 
 .. important::
    The order of the stacked cubes should be blue (bottom), red (middle), green (top).
 
-Here are some tips to perform demonstrations that lead to successful policy training:
+Tips for collecting good demonstrations:
 
 * Keep demonstrations short. Shorter demonstrations mean fewer decisions for the policy, making training easier.
-* Take a direct path. Do not follow along arbitrary axis, but move straight toward the goal.
-* Do not pause. Perform smooth, continuous motions instead. It is not obvious for a policy why and when to pause, hence continuous motions are easier to learn.
+* Take a direct path and move efficiently toward the goal.
+* Do have extended pauses. Instead, perform smooth, continuous motions. It is not obvious for a policy why and when to pause, hence continuous motions are easier to learn.
 
 If a mistake is made while performing a demonstration, press the ``R`` key (if using a keyboard) or the
 right button (if using a SpaceMouse) to discard the current demonstration and reset to a new starting position.
 
-Collect 10 successful demonstrations before proceeding with the next step.
+**Collect 10 successful demonstrations before proceeding to the next step.**
 
 
 
@@ -232,7 +279,7 @@ Annotate the subtasks in the recording:
 
          ./isaaclab.sh -p scripts/imitation_learning/isaaclab_mimic/annotate_demos.py \
          --task Isaac-Stack-Cube-Franka-IK-Rel-Mimic-v0 \
-         --visualizer kit \
+         --viz kit \
          --auto \
          --input_file ./datasets/dataset.hdf5 \
          --output_file ./datasets/annotated_dataset.hdf5
@@ -244,7 +291,7 @@ Annotate the subtasks in the recording:
 
          ./isaaclab.sh -p scripts/imitation_learning/isaaclab_mimic/annotate_demos.py \
          --task Isaac-Stack-Cube-Franka-IK-Rel-Visuomotor-Mimic-v0 \
-         --visualizer kit \
+         --viz kit \
          --enable_cameras \
          --auto \
          --input_file ./datasets/dataset.hdf5 \
@@ -262,7 +309,7 @@ Next, use Isaac Lab Mimic to generate some additional demonstrations:
       .. code:: bash
 
          ./isaaclab.sh -p scripts/imitation_learning/isaaclab_mimic/generate_dataset.py \
-         --visualizer kit \
+         --viz kit \
          --num_envs 10 \
          --generation_num_trials 10 \
          --input_file ./datasets/annotated_dataset.hdf5 \
@@ -274,7 +321,7 @@ Next, use Isaac Lab Mimic to generate some additional demonstrations:
       .. code:: bash
 
          ./isaaclab.sh -p scripts/imitation_learning/isaaclab_mimic/generate_dataset.py \
-         --visualizer kit \
+         --viz kit \
          --enable_cameras \
          --num_envs 10 \
          --generation_num_trials 10 \
@@ -411,7 +458,7 @@ Run the trained policy to visualize the results:
 
          ./isaaclab.sh -p scripts/imitation_learning/robomimic/play.py \
          --task Isaac-Stack-Cube-Franka-IK-Rel-v0 \
-         --visualizer kit \
+         --viz kit \
          --num_rollouts 50 \
          --checkpoint /PATH/TO/desired_model_checkpoint.pth
 
@@ -422,7 +469,7 @@ Run the trained policy to visualize the results:
 
          ./isaaclab.sh -p scripts/imitation_learning/robomimic/play.py \
          --task Isaac-Stack-Cube-Franka-IK-Rel-Visuomotor-v0 \
-         --visualizer kit \
+         --viz kit \
          --enable_cameras \
          --num_rollouts 50 \
          --checkpoint /PATH/TO/desired_model_checkpoint.pth
