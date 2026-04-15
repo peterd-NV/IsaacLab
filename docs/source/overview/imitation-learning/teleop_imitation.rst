@@ -336,19 +336,19 @@ Next, use Isaac Lab Mimic to generate some additional demonstrations:
          --input_file ./datasets/annotated_dataset.hdf5 \
          --output_file ./datasets/generated_dataset_small.hdf5
 
+.. tip::
+
+   The output_file of ``annotate_demos.py`` is the input_file to ``generate_dataset.py``.
+
 .. figure:: ../../_static/mimic/franka_datagen.jpg
    :width: 100%
    :align: center
    :alt: Franka robot performing a stacking task
    :figclass: align-center
 
-   Parallel data generation for the Franka robot stacking task
+   Parallel data generation for the Franka cube stacking task
 
-.. tip::
-
-   The output_file of the ``annotate_demos.py`` script is the input_file to the ``generate_dataset.py`` script
-
-Inspect the output of generated data (filename: ``generated_dataset_small.hdf5``), and if satisfactory, generate the full dataset:
+Inspect the generated data (``generated_dataset_small.hdf5``) and if satisfactory, generate the full dataset:
 
 .. tab-set::
    :sync-group: policy_type
@@ -379,11 +379,12 @@ Inspect the output of generated data (filename: ``generated_dataset_small.hdf5``
          --output_file ./datasets/generated_dataset.hdf5
 
 
-The number of demonstrations ``--generation_num_trials`` can be changed. 1000 demonstrations have been shown to provide good training results for this task.
+The number of demonstrations ``--generation_num_trials`` can be adjusted to your policy needs.
+1000 demonstrations have been shown to provide good training results for the BC RNN policy used in this tutorial.
 
 The number of environments in the ``--num_envs`` parameter can be adjusted to speed up or slow down data generation.
 The suggested values assume an RTX PRO 6000 Blackwell GPU.
-You may need to adjust the number of environments to fit your GPU memory.
+You may need to adjust the number of environments to fit your VRAM if you are using a different GPU.
 
 .. note::
 
