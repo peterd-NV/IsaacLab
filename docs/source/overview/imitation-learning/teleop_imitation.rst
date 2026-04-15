@@ -54,7 +54,7 @@ Environment Introduction
 The environment we will be using in this tutorial is ``Isaac-Stack-Cube-Franka-IK-Rel-v0`` and its variations.
 This environment contains a Franka robot attached to a table with three cubes.
 The task is to stack the cubes in the following order: blue (bottom), red (middle), green (top). As you proceed through
-the rest of this tutorial, you will encounter variations of this environment with different observation spaces 
+the rest of this tutorial, you will encounter variations of this environment with different observation spaces
 (e.g. state-based, visuomotor, etc.).
 
 Run the following command to spin up and visualize the environment using the ``zero_agent.py``
@@ -68,7 +68,7 @@ Press and hold the alt key while clicking and dragging to pan around the scene.
    --viz kit \
    --num_envs 1 \
    --task Isaac-Stack-Cube-Franka-IK-Rel-v0
-   
+
 
 Next, use the ``random_agent.py`` script to spin up the environment and perform random actions. The script will create
 and step through the environment in a loop with random tensor actions. You will see the robot move in random
@@ -100,7 +100,7 @@ the environment by quitting the script with Ctrl+C.
    --num_envs 1 \
    --task Isaac-Stack-Cube-Franka-IK-Rel-v0 \
    --teleop_device keyboard
-   
+
 
 The script will print a helper message with key bindings. For keyboard,
 the key bindings are:
@@ -170,12 +170,12 @@ the key bindings are:
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 For tasks that benefit from the use of an extended reality (XR) device with hand tracking,
-Isaac Lab supports using `Isaac Teleop <https://github.com/NVIDIA/IsaacTeleop>`_ with NVIDIA CloudXR 
-to immersively stream the scene to compatible XR devices for teleoperation. 
+Isaac Lab supports using `Isaac Teleop <https://github.com/NVIDIA/IsaacTeleop>`_ with NVIDIA CloudXR
+to immersively stream the scene to compatible XR devices for teleoperation.
 
 Follow the steps in :ref:`cloudxr-teleoperation` to learn how to install Isaac Teleop and set up CloudXR for
 teleoperation. Once you have set it up, you can launch the cube stacking environment with the follow command to try it out
-with an XR headset. Note that when using hand tracking, we recommend using the absolute action space 
+with an XR headset. Note that when using hand tracking, we recommend using the absolute action space
 variant of the task (``Isaac-Stack-Cube-Franka-IK-Abs-v0``):
 
 .. code:: bash
@@ -187,7 +187,7 @@ variant of the task (``Isaac-Stack-Cube-Franka-IK-Abs-v0``):
 
 .. tip::
 
-   For more information on teleoperation devices in Isaac Lab, see :ref:`isaac-teleop-feature` for a comprehensive 
+   For more information on teleoperation devices in Isaac Lab, see :ref:`isaac-teleop-feature` for a comprehensive
    overview of the teleop framework. See :ref:`isaac-teleop-supported-devices` for a list of supported XR devices
    and :ref:`isaac-teleop-new-device` for information on adding new devices.
 
@@ -202,7 +202,7 @@ Make a new folder in the ``IsaacLab`` root directory to store datasets:
 
    mkdir -p datasets
 
-Change ``<teleop_device>`` to the teleoperation device you want to use (e.g. ``spacemouse``, ``keyboard``) and 
+Change ``<teleop_device>`` to the teleoperation device you want to use (e.g. ``spacemouse``, ``keyboard``) and
 run the record demos script to collect a set of 10 human demonstrations for the cube stacking task.
 
 .. code:: bash
@@ -242,8 +242,8 @@ We provide a pre-recorded HDF5 dataset containing 10 human demonstrations for th
 here: `[Cube Stacking Human Dataset] <https://omniverse-content-staging.s3-us-west-2.amazonaws.com/Assets/Isaac/6.0/Isaac/IsaacLab/Mimic/franka_stack_datasets/dataset.hdf5>`__.
 If you skipped :ref:`Step 1: Human Data Collection <teleop-imitation-step-1-human-data-collection>`, you can download this dataset and use it in the remaining tutorial steps.
 
-Place the dataset in the ``IsaacLab/datasets`` folder. You may need to create the folder if you skipped Step 1 and 
-have not created it yet. 
+Place the dataset in the ``IsaacLab/datasets`` folder. You may need to create the folder if you skipped Step 1 and
+have not created it yet.
 
 
 
@@ -394,7 +394,7 @@ Step 3: Policy Training
 Install Robomimic
 ^^^^^^^^^^^^^^^^^
 
-In this step, we will train a Behavior Cloning (BC) RNN agent using `Robomimic <https://robomimic.github.io/>`__ 
+In this step, we will train a Behavior Cloning (BC) RNN agent using `Robomimic <https://robomimic.github.io/>`__
 to demonstrate a policy for the cube stacking task using the synthetic data generated in the previous step.
 
 Install the Robomimic framework using the following command:
@@ -411,8 +411,8 @@ Install the Robomimic framework using the following command:
 Train an Agent
 ^^^^^^^^^^^^^^
 
-Using the Isaac Lab Mimic generated data we can now train a state-based BC RNN agent for 
-``Isaac-Stack-Cube-Franka-IK-Rel-v0``, or a visuomotor BC RNN agent for 
+Using the Isaac Lab Mimic generated data we can now train a state-based BC RNN agent for
+``Isaac-Stack-Cube-Franka-IK-Rel-v0``, or a visuomotor BC RNN agent for
 ``Isaac-Stack-Cube-Franka-IK-Rel-Visuomotor-v0``:
 
 .. tab-set::
@@ -484,8 +484,8 @@ is not always optimal.
    :align: center
    :alt: Robomimic BCRNN policy performing the cube stacking task
    :figclass: align-center
-   
-   Robomimic BC RNN policy performing the cube stacking task. 
+
+   Robomimic BC RNN policy performing the cube stacking task.
 
 .. note::
 
@@ -499,7 +499,7 @@ is not always optimal.
 
 
 **You have now completed the introductory tutorial on synthetic data generation and policy training with Isaac Lab Mimic.
-In the sections below, you can explore examples with other robot embodiments (e.g. humanoids) and how to create your 
+In the sections below, you can explore examples with other robot embodiments (e.g. humanoids) and how to create your
 own Isaac Lab Mimic compatible environments.**
 
 
