@@ -22,8 +22,6 @@ from isaaclab_tasks.manager_based.manipulation.stack import mdp
 from isaaclab_tasks.manager_based.manipulation.stack.mdp import franka_stack_events
 from isaaclab_tasks.manager_based.manipulation.stack.stack_env_cfg import StackEnvCfg
 
-from . import stack_joint_pos_env_cfg
-
 ##
 # Pre-defined configs
 ##
@@ -44,7 +42,7 @@ _FRANKA_STACK_IK_REL_INIT_JOINT_POS: dict[str, float] = {
 
 
 @configclass
-class EventCfg(stack_joint_pos_env_cfg.EventCfg):
+class EventCfg:
     """Configuration for events."""
 
     randomize_franka_joint_state = EventTerm(

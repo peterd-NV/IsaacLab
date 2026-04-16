@@ -232,7 +232,7 @@ Tips for collecting good demonstrations:
 
 * Keep demonstrations short. Shorter demonstrations mean fewer decisions for the policy, making training easier.
 * Take a direct path and move efficiently toward the goal.
-* Do have extended pauses. Instead, perform smooth, continuous motions. It is not obvious for a policy why and when to pause, hence continuous motions are easier to learn.
+* Do not have extended pauses. Instead, perform smooth, continuous motions. It is not obvious for a policy why and when to pause, hence continuous motions are easier to learn.
 
 If a mistake is made while performing a demonstration, press the ``R`` key (if using a keyboard) or the
 right button (if using a SpaceMouse) to discard the current demonstration and reset to a new starting position.
