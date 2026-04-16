@@ -1,6 +1,17 @@
 Changelog
 ---------
 
+4.6.3 (2026-04-16)
+~~~~~~~~~~~~~~~~~~~
+
+Changed
+^^^^^^^
+
+* Changed :class:`~isaaclab.sensors.imu.Imu` and
+  :class:`~isaaclab.sensors.imu.ImuData` factory type annotations to include
+  the Newton IMU backend types.
+
+
 4.6.2 (2026-04-14)
 ~~~~~~~~~~~~~~~~~~~
 
