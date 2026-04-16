@@ -68,9 +68,10 @@ Press and hold the alt key while clicking and dragging to pan around the scene.
 .. code:: bash
 
    ./isaaclab.sh -p scripts/environments/zero_agent.py \
+   --task Isaac-Stack-Cube-Franka-IK-Rel-v0 \
    --viz kit \
-   --num_envs 1 \
-   --task Isaac-Stack-Cube-Franka-IK-Rel-v0
+   --num_envs 1
+
 
 
 Next, use the ``random_agent.py`` script to spin up the environment and perform random actions. The script will create
@@ -80,9 +81,9 @@ directions.
 .. code:: bash
 
    ./isaaclab.sh -p scripts/environments/random_agent.py \
+   --task Isaac-Stack-Cube-Franka-IK-Rel-v0 \
    --viz kit \
-   --num_envs 1 \
-   --task Isaac-Stack-Cube-Franka-IK-Rel-v0
+   --num_envs 1
 
 .. figure:: ../../_static/mimic/franka_cube_stacking_env.jpg
    :width: 100%
@@ -107,9 +108,10 @@ the environment by quitting the script with Ctrl+C.
 .. code:: bash
 
    ./isaaclab.sh -p scripts/environments/teleoperation/teleop_se3_agent.py \
+   --task Isaac-Stack-Cube-Franka-IK-Rel-v0 \
    --viz kit \
    --num_envs 1 \
-   --task Isaac-Stack-Cube-Franka-IK-Rel-v0 \
+   --sensitivity 4 \
    --teleop_device keyboard
 
 
@@ -137,9 +139,10 @@ To use a SpaceMouse, simply change ``--teleop_device`` accordingly:
 .. code:: bash
 
    ./isaaclab.sh -p scripts/environments/teleoperation/teleop_se3_agent.py \
+   --task Isaac-Stack-Cube-Franka-IK-Rel-v0 \
    --viz kit \
    --num_envs 1 \
-   --task Isaac-Stack-Cube-Franka-IK-Rel-v0 \
+   --sensitivity 4 \
    --teleop_device spacemouse
 
 The script will print a helper message with key bindings. For SpaceMouse,
@@ -192,8 +195,8 @@ variant of the task (``Isaac-Stack-Cube-Franka-IK-Abs-v0``):
 .. code:: bash
 
    ./isaaclab.sh -p scripts/environments/teleoperation/teleop_se3_agent.py \
-   --viz kit \
    --task Isaac-Stack-Cube-Franka-IK-Abs-v0 \
+   --viz kit \
    --xr
 
 .. tip::
@@ -236,6 +239,17 @@ Tips for collecting good demonstrations:
 
 If a mistake is made while performing a demonstration, press the ``R`` key (if using a keyboard) or the
 right button (if using a SpaceMouse) to discard the current demonstration and reset to a new starting position.
+
+You can replay the collected demonstrations by running:
+
+.. code:: bash
+
+   ./isaaclab.sh -p scripts/tools/replay_demos.py \
+   --task Isaac-Stack-Cube-Franka-IK-Rel-v0 \
+   --viz kit \
+   --num_envs 1 \
+   --reset_sim_buffer_each_episode \
+   --dataset_file ./datasets/dataset.hdf5
 
 **Collect 10 successful demonstrations before proceeding to the next step.**
 
