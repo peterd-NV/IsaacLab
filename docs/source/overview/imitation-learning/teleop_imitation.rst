@@ -541,6 +541,14 @@ see the page: :ref:`Examples: Data Generation and Imitation Learning for Humanoi
 Creating Your Own Isaac Lab Mimic Compatible Environments
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
+.. figure:: ../../_static/mimic/mimic_env_architecture.jpg
+   :align: center
+   :figwidth: 100%
+   :alt: Mimic compatible environment class and config hierarchy
+
+   Mimic compatible environment class and config hierarchy
+
+
 How it works
 ^^^^^^^^^^^^
 
