@@ -1,7 +1,7 @@
 Changelog
 ---------
 
-1.5.23 (2026-04-21)
+1.5.24 (2026-04-22)
 ~~~~~~~~~~~~~~~~~~~
 
 Changed
@@ -15,6 +15,15 @@ Changed
 * Changed GR1T2 and Unitree G1 Inspire pick-place environment configs to define ``idle_action`` as a plain Python
   sequence instead of ``torch.tensor``, dropping the ``torch`` import from those modules.
 
+
+1.5.23 (2026-04-21)
+~~~~~~~~~~~~~~~~~~~
+
+Fixed
+^^^^^
+
+* Refreshed Newton Warp renderer golden images for Dexsuite Kuka-Allegro environment case in
+  ``test_rendering_correctness`` because Newton Warp renderer honors visibility of prims now.
 
 1.5.22 (2026-04-20)
 ~~~~~~~~~~~~~~~~~~~
