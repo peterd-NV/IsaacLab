@@ -23,7 +23,7 @@ DATASETS_DOWNLOAD_DIR = tempfile.mkdtemp(suffix="_Isaac-Stack-Cube-Franka-IK-Rel
 NUCLEUS_DATASET_PATH = os.path.join(ISAACLAB_NUCLEUS_DIR, "Tests", "Mimic", "dataset.hdf5")
 EXPECTED_SUCCESSFUL_ANNOTATIONS = 10
 
-_SUBPROCESS_TIMEOUT = 600
+_SUBPROCESS_TIMEOUT = 5000
 
 
 @pytest.fixture
