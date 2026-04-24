@@ -44,7 +44,7 @@ parser.add_argument(
     default=False,
     help=(
         "Before loading each episode's initial state, call env.sim.reset() to clear"
-        " simulation buffers (same pattern as annotate_demos replay_episode). Only valid with --num_envs 1."
+        " simulation buffers. Only valid with --num_envs 1."
     ),
 )
 
