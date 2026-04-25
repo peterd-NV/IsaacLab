@@ -1,7 +1,7 @@
 Changelog
 ---------
 
-1.5.25 (2026-04-23)
+1.5.26 (2026-04-25)
 ~~~~~~~~~~~~~~~~~~~
 
 Changed
@@ -14,6 +14,15 @@ Changed
   via articulation ``InitialStateCfg`` instead of a reset-time default-pose event.
 * Changed GR1T2 and Unitree G1 Inspire pick-place environment configs to define ``idle_action`` as a plain Python
   sequence instead of ``torch.tensor``, dropping the ``torch`` import from those modules.
+
+
+1.5.25 (2026-04-24)
+~~~~~~~~~~~~~~~~~~~
+
+Changed
+^^^^^^^
+
+* Migrated golden images ``source/isaaclab_tasks/test/golden_images/**/*.png`` to Git LFS.
 
 
 1.5.24 (2026-04-22)
