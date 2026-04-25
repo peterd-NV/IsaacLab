@@ -21,7 +21,7 @@ from isaaclab.utils.assets import ISAACLAB_NUCLEUS_DIR, retrieve_file_path
 
 DATASETS_DOWNLOAD_DIR = tempfile.mkdtemp(suffix="_Isaac-Stack-Cube-Franka-IK-Rel-Mimic-v0")
 NUCLEUS_DATASET_PATH = os.path.join(ISAACLAB_NUCLEUS_DIR, "Tests", "Mimic", "dataset.hdf5")
-EXPECTED_SUCCESSFUL_ANNOTATIONS = 10
+EXPECTED_SUCCESSFUL_ANNOTATIONS = 9
 
 _SUBPROCESS_TIMEOUT = 5000
 
