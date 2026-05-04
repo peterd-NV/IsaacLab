@@ -63,6 +63,20 @@ class PinkInverseKinematicsAction(ActionTerm):
         # PhysX Articulation Floating joint indices offset from IsaacLab Articulation joint indices
         self._physx_floating_joint_indices_offset = 6
 
+        # Some backends (e.g. Newton's `newton.selection.ArticulationView`) do not implement
+        # `get_gravity_compensation_forces`. Detect once so we can short-circuit without
+        # raising AttributeError every step.
+        self._gravity_compensation_supported = hasattr(self._asset.root_view, "get_gravity_compensation_forces")
+        if self.cfg.enable_gravity_compensation and not self._gravity_compensation_supported:
+            import carb
+
+            carb.log_warn(
+                "PinkInverseKinematicsAction: gravity compensation requested but the active"
+                " physics backend's ArticulationView does not implement"
+                " 'get_gravity_compensation_forces'. Skipping gravity feed-forward (expect"
+                " gravity-induced pose error)."
+            )
+
         # Pre-allocate tensors for runtime use
         self._initialize_helper_tensors()
 
@@ -325,6 +339,8 @@ class PinkInverseKinematicsAction(ActionTerm):
 
     def _apply_gravity_compensation(self) -> None:
         """Apply gravity compensation to arm joints if not disabled in props."""
+        if not self._gravity_compensation_supported:
+            return
         if not self._asset.cfg.spawn.rigid_props.disable_gravity:
             # Get gravity compensation forces using cached tensor
             if self._asset.is_fixed_base:

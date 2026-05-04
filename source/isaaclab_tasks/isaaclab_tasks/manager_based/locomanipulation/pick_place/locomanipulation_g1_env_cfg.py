@@ -3,6 +3,8 @@
 #
 # SPDX-License-Identifier: BSD-3-Clause
 
+from isaaclab_newton.physics import MJWarpSolverCfg, NewtonCfg
+from isaaclab_physx.physics import PhysxCfg
 from isaaclab_teleop import IsaacTeleopCfg, XrAnchorRotationMode, XrCfg
 
 import isaaclab.envs.mdp as base_mdp
@@ -24,6 +26,7 @@ from isaaclab_tasks.manager_based.locomanipulation.pick_place.configs.agile_loco
     AgileTeacherPolicyObservationsCfg,
 )
 from isaaclab_tasks.manager_based.manipulation.pick_place import mdp as manip_mdp
+from isaaclab_tasks.utils import PresetCfg
 
 from isaaclab_assets.robots.unitree import G1_29DOF_CFG
 
@@ -255,6 +258,42 @@ def _build_g1_locomanipulation_pipeline():
 
 
 ##
+# Physics backend presets
+##
+@configclass
+class LocomanipulationG1PhysicsCfg(PresetCfg):
+    """Physics backend preset for the G1 locomanipulation env.
+
+    Selects between PhysX (default) and Newton. Use ``presets=newton`` (Hydra)
+    or pass ``selected_presets={"newton"}`` to ``parse_env_cfg`` to switch.
+
+    Note:
+        The lower-body locomotion policy at
+        ``Policies/Agile/agile_locomotion.pt`` was trained on PhysX dynamics
+        and may go unstable when the Newton backend is selected, even with
+        well-tuned solver settings. This is a sim-to-sim transfer issue
+        rather than a backend configuration bug.
+    """
+
+    default: PhysxCfg = PhysxCfg()
+    physx: PhysxCfg = PhysxCfg()
+    # njmax/nconmax mirror the G1 locomotion-velocity Newton config, sized
+    # for a 29-DOF humanoid with manipulated objects in contact.
+    newton: NewtonCfg = NewtonCfg(
+        solver_cfg=MJWarpSolverCfg(
+            njmax=128,
+            nconmax=32,
+            cone="pyramidal",
+            impratio=1,
+            integrator="implicitfast",
+        ),
+        num_substeps=1,
+        debug_mode=False,
+        use_cuda_graph=True,
+    )
+
+
+##
 # Scene definition
 ##
 @configclass
@@ -425,6 +464,9 @@ class LocomanipulationG1EnvCfg(ManagerBasedRLEnvCfg):
         # simulation settings
         self.sim.dt = 1 / 200  # 200Hz
         self.sim.render_interval = 2
+        # physics backend selectable via Hydra preset (presets=newton) or
+        # parse_env_cfg(selected_presets=...) for non-Hydra entry points.
+        self.sim.physics = LocomanipulationG1PhysicsCfg()
 
         # Set the URDF path for the IK controller. Path resolution (Nucleus → local) happens at runtime.
         self.actions.upper_body_ik.controller.urdf_path = f"{ISAACLAB_NUCLEUS_DIR}/Controllers/LocomanipulationAssets/unitree_g1_kinematics_asset/g1_29dof_with_hand_only_kinematics.urdf"  # noqa: E501

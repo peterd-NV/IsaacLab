@@ -47,6 +47,16 @@ parser.add_argument(
         " simulation buffers. Only valid with --num_envs 1."
     ),
 )
+parser.add_argument(
+    "--physics",
+    type=str,
+    default=None,
+    help=(
+        "Optional physics backend preset name to apply when the task's env_cfg exposes a"
+        " physics PresetCfg (e.g. 'newton' or 'physx'). Equivalent to 'presets=<name>' for"
+        " Hydra-decorated scripts."
+    ),
+)
 
 # append AppLauncher cli args
 AppLauncher.add_app_launcher_args(parser)
@@ -261,7 +271,8 @@ def main():
             f"Got num_envs={num_envs}. Use --num_envs 1 or disable --reset_sim_buffer_each_episode."
         )
 
-    env_cfg = parse_env_cfg(env_name, device=args_cli.device, num_envs=num_envs)
+    selected_presets = {args_cli.physics} if args_cli.physics else None
+    env_cfg = parse_env_cfg(env_name, device=args_cli.device, num_envs=num_envs, selected_presets=selected_presets)
 
     # extract success checking function to invoke in the main loop
     success_term = None
