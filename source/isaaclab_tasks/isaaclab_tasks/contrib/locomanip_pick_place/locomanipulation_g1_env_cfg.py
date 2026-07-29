@@ -3,6 +3,8 @@
 #
 # SPDX-License-Identifier: BSD-3-Clause
 
+from isaaclab_newton.physics import MJWarpSolverCfg, NewtonCfg, NewtonCollisionPipelineCfg
+from isaaclab_physx.physics import PhysxCfg
 from isaaclab_teleop import ControllerHapticFeedbackCfg, IsaacTeleopCfg, XrAnchorRotationMode, XrCfg
 
 import isaaclab.envs.mdp as base_mdp
@@ -15,6 +17,7 @@ from isaaclab.managers import SceneEntityCfg
 from isaaclab.managers import TerminationTermCfg as DoneTerm
 from isaaclab.scene import InteractiveSceneCfg
 from isaaclab.sensors import ContactSensorCfg
+from isaaclab.sim import SimulationCfg
 from isaaclab.sim.spawners.from_files.from_files_cfg import GroundPlaneCfg, UsdFileCfg
 from isaaclab.utils.assets import ISAAC_NUCLEUS_DIR, ISAACLAB_NUCLEUS_DIR
 from isaaclab.utils.configclass import configclass
@@ -25,6 +28,7 @@ from isaaclab_tasks.contrib.locomanip_pick_place.configs.agile_locomotion_observ
     AgileTeacherPolicyObservationsCfg,
 )
 from isaaclab_tasks.contrib.pick_place import mdp as manip_mdp
+from isaaclab_tasks.utils import PresetCfg, preset
 
 from isaaclab_assets.robots.unitree import G1_29DOF_CFG
 
@@ -258,6 +262,8 @@ def _build_g1_locomanipulation_pipeline():
 ##
 # Scene definition
 ##
+
+
 @configclass
 class LocomanipulationG1SceneCfg(InteractiveSceneCfg):
     """Scene configuration for locomanipulation environment with G1 robot.
@@ -288,20 +294,30 @@ class LocomanipulationG1SceneCfg(InteractiveSceneCfg):
     )
 
     # Humanoid robot w/ arms higher
-    robot: ArticulationCfg = G1_29DOF_CFG.replace(prim_path="{ENV_REGEX_NS}/Robot")
+    robot: ArticulationCfg = G1_29DOF_CFG.replace(
+        prim_path="{ENV_REGEX_NS}/Robot",
+        joint_ordering="physx",
+        body_ordering="physx",
+    )
 
     # Per-hand contact sensors over all finger links, used to drive controller
     # haptics (see HapticFeedbackCfg below). Requires activate_contact_sensors
     # on the robot spawn, enabled in the env __post_init__.
-    left_hand_contact = ContactSensorCfg(
-        prim_path="{ENV_REGEX_NS}/Robot/left_hand_.*_link",
-        update_period=0.0,
-        history_length=3,
+    left_hand_contact = preset(
+        default=ContactSensorCfg(
+            prim_path="{ENV_REGEX_NS}/Robot/left_hand_.*_link",
+            update_period=0.0,
+            history_length=3,
+        ),
+        newton_mjwarp=None,
     )
-    right_hand_contact = ContactSensorCfg(
-        prim_path="{ENV_REGEX_NS}/Robot/right_hand_.*_link",
-        update_period=0.0,
-        history_length=3,
+    right_hand_contact = preset(
+        default=ContactSensorCfg(
+            prim_path="{ENV_REGEX_NS}/Robot/right_hand_.*_link",
+            update_period=0.0,
+            history_length=3,
+        ),
+        newton_mjwarp=None,
     )
 
     # Ground plane
@@ -411,6 +427,30 @@ class TerminationsCfg:
 
 
 @configclass
+class PhysicsCfg(PresetCfg):
+    """Physics backend presets for the G1 locomanipulation task."""
+
+    default = PhysxCfg()
+    newton_mjwarp = NewtonCfg(
+        solver_cfg=MJWarpSolverCfg(
+            solver="newton",
+            integrator="implicitfast",
+            njmax=300,
+            nconmax=128,
+            impratio=10.0,
+            cone="elliptic",
+            iterations=100,
+            ls_iterations=50,
+            use_mujoco_contacts=False,
+        ),
+        collision_cfg=NewtonCollisionPipelineCfg(),
+        num_substeps=2,
+        debug_mode=False,
+    )
+    physx = default
+
+
+@configclass
 class LocomanipulationG1EnvCfg(ManagerBasedRLEnvCfg):
     """Configuration for the G1 locomanipulation environment.
 
@@ -420,6 +460,8 @@ class LocomanipulationG1EnvCfg(ManagerBasedRLEnvCfg):
     behaviors.
     """
 
+    # Simulation settings
+    sim: SimulationCfg = SimulationCfg(physics=PhysicsCfg())
     # Scene settings
     scene: LocomanipulationG1SceneCfg = LocomanipulationG1SceneCfg(num_envs=1, env_spacing=2.5, replicate_physics=True)
     # MDP settings
@@ -460,7 +502,7 @@ class LocomanipulationG1EnvCfg(ManagerBasedRLEnvCfg):
 
         # Enable contact reporting on the robot so the per-hand ContactSensors
         # report finger forces, and drive controller haptics from them.
-        self.scene.robot.spawn.activate_contact_sensors = True
+        self.scene.robot.spawn.activate_contact_sensors = preset(default=True, newton_mjwarp=False)
         self.haptic_feedback = ControllerHapticFeedbackCfg(
             left_sensor_name="left_hand_contact",
             right_sensor_name="right_hand_contact",

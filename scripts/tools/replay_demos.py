@@ -8,9 +8,12 @@
 
 
 import argparse
+import sys
 
 from isaaclab.app import AppLauncher
 from isaaclab.utils.string import list_intersection, string_to_callable
+
+from isaaclab_tasks.utils import setup_preset_cli
 
 # add argparse arguments
 parser = argparse.ArgumentParser(description="Replay demonstrations in Isaac Lab environments.")
@@ -53,7 +56,7 @@ parser.add_argument("--external_callback", default=None, help="Fully qualified p
 # append AppLauncher cli args
 AppLauncher.add_app_launcher_args(parser)
 # parse the arguments
-args_cli, remaining_args = parser.parse_known_args()
+args_cli, remaining_args = setup_preset_cli(parser)
 # args_cli.headless = True
 
 # launch the simulator
@@ -66,10 +69,9 @@ if args_cli.external_callback:
     external_callback_function = string_to_callable(args_cli.external_callback, separator=".")
     remaining_args_env_registration = external_callback_function()
 
-# Error on unrecognized arguments.
-unrecognized_args = list_intersection(remaining_args, remaining_args_env_registration)
-if unrecognized_args:
-    parser.error(f"unrecognized arguments: {' '.join(unrecognized_args)}")
+# Hand the arguments consumed by neither this parser nor the callback over to Hydra.
+remaining_args = list_intersection(remaining_args, remaining_args_env_registration)
+sys.argv = [sys.argv[0]] + remaining_args
 
 """Rest everything follows."""
 
@@ -83,7 +85,7 @@ from isaaclab.devices import Se3Keyboard, Se3KeyboardCfg
 from isaaclab.utils.datasets import EpisodeData, HDF5DatasetFileHandler
 
 import isaaclab_tasks  # noqa: F401
-from isaaclab_tasks.utils.parse_cfg import parse_env_cfg
+from isaaclab_tasks.utils.hydra import resolve_task_config
 
 is_paused = False
 
@@ -274,7 +276,9 @@ def main():
             f"Got num_envs={num_envs}. Use --num_envs 1 or disable --reset_sim_buffer_each_episode."
         )
 
-    env_cfg = parse_env_cfg(env_name, device=args_cli.device, num_envs=num_envs)
+    env_cfg, _ = resolve_task_config(env_name, "")
+    env_cfg.sim.device = args_cli.device
+    env_cfg.scene.num_envs = num_envs
 
     # extract success checking function to invoke in the main loop
     success_term = None

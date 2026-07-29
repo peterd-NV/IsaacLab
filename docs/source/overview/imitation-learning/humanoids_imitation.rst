@@ -449,6 +449,18 @@ Follow the same data collection, annotation, and generation process as demonstra
       --task IsaacContrib-PickPlace-Locomanipulation-G1-Abs \
       --dataset_file ./datasets/dataset_g1_locomanip.hdf5
 
+   To replay the same demonstrations with Newton's MJWarp solver, append the
+   ``physics=newton_mjwarp`` preset selector:
+
+   .. code:: bash
+
+      uv run python scripts/tools/replay_demos.py \
+      --device cuda:0 \
+      --visualizer kit \
+      --task IsaacContrib-PickPlace-Locomanipulation-G1-Abs \
+      --dataset_file ./datasets/dataset_g1_locomanip.hdf5 \
+      physics=newton_mjwarp
+
    To annotate the demonstrations:
 
    .. code:: bash
