@@ -78,10 +78,11 @@ parser.add_argument(
 parser.add_argument(
     "--reset_sim_buffer_each_episode",
     action=argparse.BooleanOptionalAction,
-    default=True,
+    default=None,
     help=(
         "Call env.sim.reset() before the initial episode and between recording attempts."
-        " Use --no-reset_sim_buffer_each_episode to preserve simulation buffers."
+        " Use --no-reset_sim_buffer_each_episode to preserve simulation buffers. When omitted, the environment"
+        " configuration may select a task-specific default; otherwise this defaults to enabled."
     ),
 )
 parser.add_argument(
@@ -333,6 +334,9 @@ def create_environment_config(
     except Exception as e:
         logger.error(f"Failed to parse environment configuration: {e}")
         exit(1)
+
+    if args_cli.reset_sim_buffer_each_episode is None:
+        args_cli.reset_sim_buffer_each_episode = getattr(env_cfg, "reset_sim_buffer_each_episode", True)
 
     # When --teleop_device is explicitly provided, use the legacy teleop_devices path
     # even if isaac_teleop is configured. Otherwise prefer isaac_teleop when available.
