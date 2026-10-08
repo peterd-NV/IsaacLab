@@ -11,6 +11,7 @@ This module provides utility functions to help with controller implementations.
 import contextlib
 import glob
 import logging
+import math
 import os
 import re
 import sys
@@ -52,15 +53,42 @@ def convert_usd_to_urdf(usd_path: str, output_path: str, force_conversion: bool 
         os.makedirs(urdf_meshes_output_dir, exist_ok=True)
 
         from isaacsim.asset.exporter.urdf import UsdToUrdfConverter
+        from isaacsim.asset.exporter.urdf.converter.robot_finder import find_robot
+        from pxr import Sdf, Usd, UsdPhysics
 
-        usd_to_urdf = UsdToUrdfConverter(
-            stage=usd_path,
-            root_prim_path=None,
-            mesh_dir_name="../meshes",
-            mesh_path_prefix="../meshes/",
-            visualize_collision_meshes=False,
-        )
-        usd_to_urdf.convert(urdf_output_path)
+        # The exporter validates limits before writing the URDF. Supply the same
+        # effort fallback as the Pinocchio sanitizer on an export-only session layer.
+        # In particular, passive mimic joints may have no finite drive effort.
+        stage = Usd.Stage.Open(Sdf.Layer.FindOrOpen(usd_path), sessionLayer=Sdf.Layer.CreateAnonymous())
+        with Usd.EditContext(stage, stage.GetSessionLayer()):
+            # Resolve the exporter's physics variant before checking composed effort values.
+            find_robot(stage)
+            for prim in stage.Traverse():
+                if prim.IsA(UsdPhysics.RevoluteJoint):
+                    drive_type = "angular"
+                elif prim.IsA(UsdPhysics.PrismaticJoint):
+                    drive_type = "linear"
+                else:
+                    continue
+                effort = None
+                if prim.HasAPI(UsdPhysics.DriveAPI, drive_type):
+                    effort = UsdPhysics.DriveAPI(prim, drive_type).GetMaxForceAttr().Get()
+                if effort is None or not math.isfinite(effort):
+                    effort_attr = prim.GetAttribute("urdf:limit:effort")
+                    effort = effort_attr.Get() if effort_attr else None
+                    if effort is None or not math.isfinite(effort):
+                        if not effort_attr:
+                            effort_attr = prim.CreateAttribute("urdf:limit:effort", Sdf.ValueTypeNames.Float)
+                        effort_attr.Set(0.0)
+
+            usd_to_urdf = UsdToUrdfConverter(
+                stage=stage,
+                root_prim_path=None,
+                mesh_dir_name="../meshes",
+                mesh_path_prefix="../meshes/",
+                visualize_collision_meshes=False,
+            )
+            usd_to_urdf.convert(urdf_output_path)
 
         _sanitize_urdf_for_pinocchio(urdf_output_path)
     return urdf_output_path, urdf_meshes_output_dir

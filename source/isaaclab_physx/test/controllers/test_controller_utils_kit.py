@@ -10,23 +10,17 @@ from isaaclab.test.utils import launch_test_simulation
 launch_test_simulation()
 
 import os
-import sys
 import xml.etree.ElementTree as ET
-from types import ModuleType
 
 import pytest
 
 import omni.kit.app
+from pxr import Usd, UsdGeom, UsdPhysics
 
 from isaaclab.controllers.utils import convert_usd_to_urdf, resolve_rmpflow_path
+from isaaclab.sim.utils import enable_extension
 
 pytestmark = pytest.mark.integration
-
-
-def _mock_module(monkeypatch, name: str) -> ModuleType:
-    module = ModuleType(name)
-    monkeypatch.setitem(sys.modules, name, module)
-    return module
 
 
 def _mock_kit_app(monkeypatch):
@@ -59,9 +53,23 @@ def _mock_kit_app(monkeypatch):
 
 def test_convert_usd_to_urdf_uses_isaacsim_exporter(monkeypatch, tmp_path):
     """Test that USD-to-URDF conversion uses Isaac Sim's URDF exporter."""
+    enable_extension("isaacsim.asset.exporter.urdf")
+    import isaacsim.asset.exporter.urdf as urdf_module
+
     enabled_extensions = _mock_kit_app(monkeypatch)
-    for module_name in ("isaacsim.asset", "isaacsim.asset.exporter"):
-        _mock_module(monkeypatch, module_name).__path__ = []
+
+    usd_path = tmp_path / "gr1.usd"
+    stage = Usd.Stage.CreateNew(str(usd_path))
+    root = UsdGeom.Xform.Define(stage, "/Robot").GetPrim()
+    stage.SetDefaultPrim(root)
+    UsdPhysics.ArticulationRootAPI.Apply(root)
+    for name in ("base", "tip"):
+        link = UsdGeom.Xform.Define(stage, f"/Robot/{name}").GetPrim()
+        UsdPhysics.RigidBodyAPI.Apply(link)
+    joint = UsdPhysics.RevoluteJoint.Define(stage, "/Robot/joint")
+    joint.CreateBody0Rel().SetTargets(["/Robot/base"])
+    joint.CreateBody1Rel().SetTargets(["/Robot/tip"])
+    stage.GetRootLayer().Save()
 
     converter_args = {}
 
@@ -76,14 +84,16 @@ def test_convert_usd_to_urdf_uses_isaacsim_exporter(monkeypatch, tmp_path):
                     '<limit lower="-inf" upper="inf" velocity="inf"/></joint></robot>'
                 )
 
-    urdf_module = _mock_module(monkeypatch, "isaacsim.asset.exporter.urdf")
-    urdf_module.UsdToUrdfConverter = MockUsdToUrdfConverter
+    monkeypatch.setattr(urdf_module, "UsdToUrdfConverter", MockUsdToUrdfConverter)
 
-    urdf_path, mesh_path = convert_usd_to_urdf("/assets/gr1.usd", str(tmp_path))
+    urdf_path, mesh_path = convert_usd_to_urdf(str(usd_path), str(tmp_path))
 
     assert enabled_extensions == ["isaacsim.asset.exporter.urdf"]
+    export_stage = converter_args["stage"]
+    assert isinstance(export_stage, Usd.Stage)
+    assert export_stage.GetRootLayer().identifier == str(usd_path)
     assert converter_args == {
-        "stage": "/assets/gr1.usd",
+        "stage": export_stage,
         "root_prim_path": None,
         "mesh_dir_name": "../meshes",
         "mesh_path_prefix": "../meshes/",
