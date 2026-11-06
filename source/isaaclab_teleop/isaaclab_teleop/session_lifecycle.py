@@ -110,6 +110,8 @@ logger = logging.getLogger(__name__)
 
 _DLDEVICE_CPU = 1
 
+_KIT_XR_SHUTDOWN_TIMEOUT_S = 5.0
+
 _MAX_PENDING_CLIENT_MESSAGES = 32
 """Bound on host-originated messages awaiting delivery to the XR client.
 
@@ -686,7 +688,7 @@ class TeleopSessionLifecycle:
         # start() re-runs its own checks rather than replaying stale ones.
         self._pending_client_messages.clear()
 
-        if self._cloudxr_launcher is not None:
+        if self._cloudxr_launcher is not None and self._disable_kit_xr():
             try:
                 self._cloudxr_launcher.stop()
             except RuntimeError:
@@ -696,6 +698,41 @@ class TeleopSessionLifecycle:
                 logger.info("CloudXR runtime stopped")
 
         logger.info("Isaac Capture session ended")
+
+    def _disable_kit_xr(self) -> bool:
+        """Release the OpenXR instance borrowed from Kit before stopping CloudXR.
+
+        Returns:
+            Whether Kit no longer needs the CloudXR runtime.
+        """
+        if self._is_replay or not self._use_kit_xr_bridge:
+            return True
+
+        try:
+            import omni.kit.app
+            import omni.kit.xr.system.openxr as openxr
+            from omni.kit.xr.core import XRCore
+        except ImportError:
+            return True
+
+        app = omni.kit.app.get_app()
+        if app.is_running():
+            xr_core = XRCore.get_singleton()
+            xr_core.request_disable_profile()
+            # Allow a subsequent headless start() to enable the AR profile again.
+            type(self)._xr_ar_profile_enabled = False
+            deadline = time.monotonic() + _KIT_XR_SHUTDOWN_TIMEOUT_S
+            while app.is_running():
+                if not xr_core.is_xr_enabled() and not openxr.get_instance_handle():
+                    return True
+                if time.monotonic() >= deadline:
+                    break
+                app.update()
+
+        if not app.is_running() and not openxr.get_instance_handle():
+            return True
+        logger.warning("Kit XR is still active; CloudXR runtime retained for atexit cleanup")
+        return False
 
     # ------------------------------------------------------------------
     # Pipeline construction and hand debug outputs
